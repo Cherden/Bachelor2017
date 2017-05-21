@@ -5,23 +5,29 @@
 #include <unistd.h>
 
 #include "KinectWrapper.h"
-#include "Transfer.h"
+#include "UDPConnection.h"
+#include "Logger.h"
 
-#define LOOPS 1800
+
+#define LOG_LEVEL DEBUG
+
 
 using namespace std;
 
-int main(void){
-	KinectWrapper kw = KinectWrapper::getInstance();
 
-	size_t frame_buffer_size = kw.getVideoFrameSize + kw.getDepthFrameSize;
+int main(void){
+	KinectWrapper kinect = KinectWrapper::getInstance();
+
+	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
 	char frame_buffer[frame_buffer_size] = {0};
+	
+	Logger logger = Logger::getInstance();
+	logger.setLogLevel(LOG_LEVEL);
 
 	int ret = 0;
 
-	Transfer con(1234, "127.0.0.1");
+	UDPConnection con(CONNECTION_PORT, "127.0.0.1", 0);
 	con.createConnection();
-
 
 	clock_t start_time = 0;
 	clock_t timestamp = 0;
@@ -32,8 +38,8 @@ int main(void){
 	while(1){
 		start_time = clock();
 
-		if ((ret = kw.getData(frame_buffer)) != 0){
-			cout << "ERROR: getData returned " << ret << endl;
+		if ((ret = kinect.getData(frame_buffer)) != 0){
+			logger.log(WARNING, "error on receiving frame from kinect");
 			break;
 		}
 
