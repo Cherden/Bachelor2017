@@ -9,19 +9,15 @@
 #include <string.h>
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 #include "Logger.h"
 
+using namespace std;
 
 UDPConnection::UDPConnection(int port, string ip_address)
  : _port(port)
  , _ip_address(ip_address)
- , _socket(0) {
-
-
-	/*size_t ip_len = strlen(ip_address.c_str()) + 1;
-	_ip_address = (char *) malloc(ip_len);
-	strncpy(_ip_address, ip_address, ip_len);*/
-}
+ , _socket(0) {}
 
 UDPConnection::~UDPConnection(){
 	if (_socket){
@@ -35,16 +31,18 @@ void UDPConnection::createConnection(){
 	_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (_socket < 0){
 		LOG_ERROR("failed to create socket " << strerror(errno));
+		return;
 	}
 
 	memset((char *) &me, 0, sizeof(me));
 	me.sin_family = AF_INET;
 	me.sin_port = htons(_port);
-	me.sin_addr.s_addr = inet_addr(INADDR_ANY);
+	me.sin_addr.s_addr = INADDR_ANY;
 
 	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
 		LOG_ERROR("failed to bind the socket " << strerror(errno));
 		closeConnection();
+		return;
 	}
 
 	LOG_DEBUG("succesfully created and bound socket " << _socket);

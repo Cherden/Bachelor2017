@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define LOGGING_ENABLED
+//#define LOGGING_ENABLED
 
 #define CPP_STRING(x) string(x)
 
@@ -14,9 +14,12 @@ using namespace std;
 
 #ifdef LOGGING_ENABLED
 #define LOG(x, y) (*Logger::getLogger().getStream()) << y
+#define SET_LOG_LEVEL(x) Logger::getLogger().setLogLevel(x)
 #else
-#define LOG(x, y) 
+#define LOG(x, y)
+#define SET_LOG_LEVEL(x)
 #endif
+
 #define LOG_DEBUG(x) LOG(DEBUG, x)
 #define LOG_WARNING(x) LOG(WARNING, x)
 #define LOG_ERROR(x) LOG(ERROR, x)

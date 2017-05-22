@@ -21,8 +21,7 @@ int main(void){
 	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
 	char frame_buffer[frame_buffer_size] = {0};
 
-	Logger logger = Logger::getInstance();
-	logger.setLogLevel(LOG_LEVEL);
+	SET_LOG_LEVEL(LOG_LEVEL);
 
 	int ret = 0;
 
@@ -38,8 +37,8 @@ int main(void){
 	while(1){
 		start_time = clock();
 
-		if ((ret = kinect.getData(frame_buffer)) != 0){
-			logger.log(WARNING, "error on receiving frame from kinect");
+		if ((ret = kinect.getData(BOTH, frame_buffer)) != 0){
+			LOG_WARNING("error on receiving frame from kinect");
 			break;
 		}
 

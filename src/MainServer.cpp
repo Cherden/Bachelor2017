@@ -20,8 +20,10 @@ int main(void){
 	char frame_buffer[frame_buffer_size] = {0};
 
 	UDPConnection con(CONNECTION_PORT, "127.0.0.1");
+	con.createConnection();
 
 	while(1){
+		cout << "wait for data" << endl;
 		con.recvData(frame_buffer, frame_buffer_size);
 		cout << "received data" << endl;
 	}

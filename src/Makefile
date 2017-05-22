@@ -12,7 +12,7 @@ server : $(OBJS_SERVER)
 	$(CC) $(CPP_VERSION) -o server $(OBJS_SERVER) $(LFLAGS) $(LIBS)
 
 client : $(OBJS_CLIENT)
-	$(CC) $(CPP_VERSION) -o client $(OBJS_CLIENT) $(LFLAGS)
+	$(CC) $(CPP_VERSION) -o client $(OBJS_CLIENT) $(LFLAGS) $(LIBS)
 
 %.o : %.cpp
 	g++ -c -g -Wall -o $@ $<
