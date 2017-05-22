@@ -18,11 +18,12 @@ using namespace std;
 int main(void){
 	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
 	char frame_buffer[frame_buffer_size] = {0};
-	
-	UDPConnection con(CONNECTION_PORT, "127.0.0.1", 0);
+
+	UDPConnection con(CONNECTION_PORT, "127.0.0.1");
 
 	while(1){
-		con.recvData(frame_buffer, frame_buffer_size);		
+		con.recvData(frame_buffer, frame_buffer_size);
+		cout << "received data" << endl;
 	}
 
 	return 0;

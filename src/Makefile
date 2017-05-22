@@ -1,17 +1,22 @@
-OBJS = KinectWrapper.o main.o
+OBJS = Logger.o UDPConnection.o KinectWrapper.o
+OBJS_SERVER = MainServer.o $(OBJS)
+OBJS_CLIENT = MainClient.o $(OBJS)
 CC = g++
+CPP_VERSION = -std=c++11
 DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG)
-LFLAGS = -Wall -L/usr/local/lib/ -lfreenect -lfreenect_sync $(DEBUG)
+LFLAGS = -Wall $(DEBUG) -L/usr/local/lib/
+LIBS = -lfreenect -lfreenect_sync
 
-dist_middleware : $(OBJS)
-	$(CC) $(OBJS) -o dist_middleware $(LFLAGS)
+server : $(OBJS_SERVER)
+	$(CC) $(CPP_VERSION) -o server $(OBJS_SERVER) $(LFLAGS) $(LIBS)
 
-KinectWrapper.o : KinectWrapper.h KinectWrapper.cpp
-	$(CC) $(CFLAGS) KinectWrapper.cpp
+client : $(OBJS_CLIENT)
+	$(CC) $(CPP_VERSION) -o client $(OBJS_CLIENT) $(LFLAGS)
 
-main.o : KinectWrapper.h KinectWrapper.cpp
-	$(CC) $(CFLAGS) main.cpp
+%.o : %.cpp
+	g++ -c -g -Wall -o $@ $<
+	#$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	\rm *.o dist_middleware
+	\rm *.o server client

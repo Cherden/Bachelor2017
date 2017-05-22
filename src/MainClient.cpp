@@ -20,13 +20,13 @@ int main(void){
 
 	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
 	char frame_buffer[frame_buffer_size] = {0};
-	
+
 	Logger logger = Logger::getInstance();
 	logger.setLogLevel(LOG_LEVEL);
 
 	int ret = 0;
 
-	UDPConnection con(CONNECTION_PORT, "127.0.0.1", 0);
+	UDPConnection con(CONNECTION_PORT, "127.0.0.1");
 	con.createConnection();
 
 	clock_t start_time = 0;

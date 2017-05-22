@@ -12,20 +12,18 @@
 #include "Logger.h"
 
 
-UDPConnection::UDPConnection(int port, char* ip_address, int option)
+UDPConnection::UDPConnection(int port, string ip_address)
  : _port(port)
- , _ip_address(0)
- , _socket(0)
- , _option(option) {
+ , _ip_address(ip_address)
+ , _socket(0) {
 
-	size_t ip_len = strlen(ip_address) + 1;
+
+	/*size_t ip_len = strlen(ip_address.c_str()) + 1;
 	_ip_address = (char *) malloc(ip_len);
-	strncpy(_ip_address, ip_address, ip_len);
+	strncpy(_ip_address, ip_address, ip_len);*/
 }
 
 UDPConnection::~UDPConnection(){
-	free(_ip_address);
-
 	if (_socket){
 		close(_socket);
 	}
@@ -45,28 +43,28 @@ void UDPConnection::createConnection(){
 	me.sin_addr.s_addr = inet_addr(INADDR_ANY);
 
 	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
-		LOG_ERROR("failed to bind the socket " << strerror(errno));		
+		LOG_ERROR("failed to bind the socket " << strerror(errno));
 		closeConnection();
 	}
-	
+
 	LOG_DEBUG("succesfully created and bound socket " << _socket);
 }
 
 void UDPConnection::sendData(void *buffer, int buffer_size){
 	struct sockaddr_in server;
-	
+
 	memset((char*) &server, 0, sizeof(server));
 	server.sin_family = AF_INET;
-	server.sin_port = htons(_port);	
-	inet_aton(_ip_address, &server.sin_addr);
-	
+	server.sin_port = htons(_port);
+	inet_aton(_ip_address.c_str(), &server.sin_addr);
+
 	if (_socket){
 		if (sendto(_socket, buffer, buffer_size, 0
 			, (struct sockaddr *) &server, sizeof(server)) < 0){
 			LOG_ERROR("failed to send data " << strerror(errno));
 		} else {
-			LOG_DEBUG("sent udp packet, socket: " << _socket
-				<< " address: " << inet_ntoa(server.sin_addr) << " port: " << _port);
+			LOG_DEBUG("sent udp packet, socket: " << _socket << " address: "
+			 << inet_ntoa(server.sin_addr) << " port: " << _port);
 		}
 	} else {
 		LOG_ERROR("failed to send data because the socket is closed");
@@ -76,13 +74,13 @@ void UDPConnection::sendData(void *buffer, int buffer_size){
 void UDPConnection::recvData(void *buffer, int buffer_size){
 	struct sockaddr_in server;
 	socklen_t len = sizeof(server);
-	
+
 	if (_socket){
 		if (recvfrom(_socket, buffer, buffer_size, 0, (struct sockaddr *) &server, &len) < 0){
 			LOG_ERROR("failed to receive data " << strerror(errno));
 		} else {
-			LOG_DEBUG("received udp packet, socket: " << _socket 
-				<< " address: " << inet_ntoa(server.sin_addr) << " port: " << ntohs(server.sin_port));
+			LOG_DEBUG("received udp packet, socket: " << _socket << " address: "
+			  << inet_ntoa(server.sin_addr) << " port: " << ntohs(server.sin_port));
 		}
 	} else {
 		LOG_ERROR("failed to receive data because the socket is closed");

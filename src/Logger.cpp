@@ -1,21 +1,32 @@
 #include "Logger.h"
 
+#include <time.h>
+
 Logger::Logger()
  : _level(DEBUG)
  , _file(0) {
-	_file.open("log.txt");
+	_file->open("log.txt");
 }
 
 Logger::~Logger(){
-	_file.close();
+	_file->close();
 }
 
-void Logger::log(LogLevel l, char* msg){
+Logger Logger::getLogger(){
+	static Logger logger;
+	return logger;
+}
+
+void Logger::log(LogLevel l, string msg){
 	if (l < _level) {
 		return;
 	}
-	
-	_file << "[" << getLogLevelString(l) << "] : " << msg << endl;
+
+	(*_file) << "[" << getLogLevelString(l) << "] " << clock() << " : " << msg << endl;
+}
+
+ofstream* Logger::getStream(){
+	return _file;
 }
 
 string Logger::getLogLevelString(LogLevel l){
@@ -23,6 +34,7 @@ string Logger::getLogLevelString(LogLevel l){
 		case DEBUG : return "DEBUG";
 		case WARNING : return "WARNING";
 		case ERROR : return "ERROR";
+		default : return "UNKNOWN";
 	}
 }
 

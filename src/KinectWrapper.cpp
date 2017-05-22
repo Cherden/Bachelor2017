@@ -23,7 +23,7 @@ KinectWrapper KinectWrapper::getInstance(){
 
 int KinectWrapper::getData(FrameInfo info, char* output_buffer){
     int ret = 0;
-	uint32_t* timestamp;
+	uint32_t* timestamp = 0;
 
     switch(info){
         case RGB:
@@ -38,7 +38,7 @@ int KinectWrapper::getData(FrameInfo info, char* output_buffer){
 		case BOTH:
 			ret = freenect_sync_get_video_with_res((void **) &output_buffer, timestamp, 0,
         	        FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB);
-			ret |= freenect_sync_get_depth_with_res((void **) &(output_buffer + VIDEO_FRAME_MAX_SIZE)
+			ret |= freenect_sync_get_depth_with_res((void **) &output_buffer[VIDEO_FRAME_MAX_SIZE]
 					, timestamp, 0, FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_REGISTERED);
 			break;
     }
