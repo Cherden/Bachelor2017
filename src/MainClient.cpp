@@ -38,7 +38,7 @@ int main(void){
 		start_time = clock();
 
 		if ((ret = kinect.getData(BOTH, frame_buffer)) != 0){
-			LOG_WARNING("error on receiving frame from kinect");
+			LOG_WARNING << "error on receiving frame from kinect" << endl;
 			break;
 		}
 

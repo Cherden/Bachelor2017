@@ -30,7 +30,7 @@ void UDPConnection::createConnection(){
 
 	_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (_socket < 0){
-		LOG_ERROR("failed to create socket " << strerror(errno));
+		LOG_ERROR << "failed to create socket " << strerror(errno) << endl;
 		return;
 	}
 
@@ -40,12 +40,12 @@ void UDPConnection::createConnection(){
 	me.sin_addr.s_addr = INADDR_ANY;
 
 	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
-		LOG_ERROR("failed to bind the socket " << strerror(errno));
+		LOG_ERROR << "failed to bind the socket " << strerror(errno) << endl;
 		closeConnection();
 		return;
 	}
 
-	LOG_DEBUG("succesfully created and bound socket " << _socket);
+	LOG_DEBUG << "succesfully created and bound socket " << _socket << endl;
 }
 
 void UDPConnection::sendData(void *buffer, int buffer_size){
@@ -59,13 +59,13 @@ void UDPConnection::sendData(void *buffer, int buffer_size){
 	if (_socket){
 		if (sendto(_socket, buffer, buffer_size, 0
 			, (struct sockaddr *) &server, sizeof(server)) < 0){
-			LOG_ERROR("failed to send data " << strerror(errno));
+			LOG_ERROR << "failed to send data " << strerror(errno) << endl;
 		} else {
-			LOG_DEBUG("sent udp packet, socket: " << _socket << " address: "
-			 << inet_ntoa(server.sin_addr) << " port: " << _port);
+			LOG_DEBUG << "sent udp packet, socket: " << _socket << " address: " \
+			 << inet_ntoa(server.sin_addr) << " port: " << _port << endl;
 		}
 	} else {
-		LOG_ERROR("failed to send data because the socket is closed");
+		LOG_ERROR << "failed to send data because the socket is closed" << endl;
 	}
 }
 
@@ -75,19 +75,19 @@ void UDPConnection::recvData(void *buffer, int buffer_size){
 
 	if (_socket){
 		if (recvfrom(_socket, buffer, buffer_size, 0, (struct sockaddr *) &server, &len) < 0){
-			LOG_ERROR("failed to receive data " << strerror(errno));
+			LOG_ERROR << "failed to receive data " << strerror(errno) << endl;
 		} else {
-			LOG_DEBUG("received udp packet, socket: " << _socket << " address: "
-			  << inet_ntoa(server.sin_addr) << " port: " << ntohs(server.sin_port));
+			LOG_DEBUG <<"received udp packet, socket: " << _socket << " address: " \
+			  << inet_ntoa(server.sin_addr) << " port: " << ntohs(server.sin_port) << endl;
 		}
 	} else {
-		LOG_ERROR("failed to receive data because the socket is closed");
+		LOG_ERROR << "failed to receive data because the socket is closed"  << endl;
 	}
 }
 
 void UDPConnection::closeConnection(){
 	if (_socket){
-		LOG_DEBUG("closing socket " << _socket);
+		LOG_DEBUG << "closing socket " << _socket << endl;
 		close(_socket);
 	}
 }

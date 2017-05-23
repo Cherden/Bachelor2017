@@ -23,9 +23,9 @@ int main(void){
 	con.createConnection();
 
 	while(1){
-		cout << "wait for data" << endl;
+		LOG_DEBUG << "wait for data" << endl;
 		con.recvData(frame_buffer, frame_buffer_size);
-		cout << "received data" << endl;
+		LOG_DEBUG << "received data" << endl;
 	}
 
 	return 0;
