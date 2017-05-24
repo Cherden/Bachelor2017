@@ -1,5 +1,5 @@
-*.o
+obj/*
 server
 client
 .*
-
+log.txt

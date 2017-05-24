@@ -9,14 +9,9 @@
 
 using namespace std;
 
-int testDataAcquisitin(void){
+int main(void){
 	KinectWrapper kw = KinectWrapper::getInstance();
 	char frame_buffer[424688] = {0};
-	uint32_t timestamp;
-
-	//kw.getFrame(DEPTH, frame_buffer, &timestamp);
-	//kw.getFrame(RGB, frame_buffer, &timestamp);
-
 
 	clock_t start_time;
 	clock_t end_time;
@@ -24,6 +19,9 @@ int testDataAcquisitin(void){
 	clock_t avg_time;
 	clock_t worst_time;
 	clock_t best_time;
+
+	kw.getData(DEPTH, frame_buffer);
+	kw.getData(VIDEO, frame_buffer);
 
 	printf("running depth and rgb frame get for %d loops\n", LOOPS);
 
@@ -33,8 +31,8 @@ int testDataAcquisitin(void){
 	for(int i=0; i<LOOPS; i++){
 		start_time = clock();
 
-		kw.getFrame(DEPTH, frame_buffer, &timestamp);
-		kw.getFrame(RGB, frame_buffer, &timestamp);
+		kw.getData(DEPTH, frame_buffer);
+		kw.getData(VIDEO, frame_buffer);
 
 		end_time = clock();
 		diff_time = end_time - start_time;

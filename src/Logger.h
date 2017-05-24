@@ -9,20 +9,25 @@
 using namespace std;
 
 #define LOGGING_ENABLED
+//#define CONSOLE_LOGGING
 
 #ifdef LOGGING_ENABLED
+#ifdef CONSOLE_LOGGING
+	#define LOG(x) cout
+#else
 	#define LOG(x) Logger::getLogger().log(x)
+#endif
 	#define SET_LOG_LEVEL(x) Logger::getLogger().setLogLevel(x)
 #else
 	#define LOG(x, y)
 	#define SET_LOG_LEVEL(x)
 #endif
 
-#define LOG_DEBUG LOG(DEBUG)
-#define LOG_WARNING if (Logger::getLogger().getLogLevel() < WARNING); \
+#define LOG_DEBUG  	if (Logger::getLogger().getLogLevel() > DEBUG); \
+					else LOG(DEBUG)
+#define LOG_WARNING if (Logger::getLogger().getLogLevel() > WARNING); \
                     else LOG(WARNING)
-#define LOG_ERROR if (Logger::getLogger().getLogLevel() < WARNING); \
-                    else LOG(ERROR)
+#define LOG_ERROR 	LOG(ERROR)
 
 typedef enum {
 	DEBUG,
@@ -35,11 +40,11 @@ public:
 	static Logger& getLogger(){
 		static Logger logger;
 		return logger;
-	}        
+	}
 	ofstream& log(LogLevel l){
 		_file << "[" << getLogLevelString(l) << "] " << clock() << " : ";
 		return _file;
-	}        
+	}
 	void setLogLevel(LogLevel l){
 			_level = l;
 	}

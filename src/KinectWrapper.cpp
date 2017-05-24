@@ -23,23 +23,23 @@ KinectWrapper KinectWrapper::getInstance(){
 
 int KinectWrapper::getData(FrameInfo info, char* output_buffer){
     int ret = 0;
-	uint32_t* timestamp = 0;
+	uint32_t timestamp = 0;
 
     switch(info){
-        case RGB:
-            ret = freenect_sync_get_video_with_res((void **) &output_buffer, timestamp, 0,
+        case VIDEO:
+            ret = freenect_sync_get_video_with_res((void **) &output_buffer, &timestamp, 0,
         	           FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB);
             break;
 
         case DEPTH:
-        	ret = freenect_sync_get_depth_with_res((void **) &output_buffer, timestamp, 0,
+        	ret = freenect_sync_get_depth_with_res((void **) &output_buffer, &timestamp, 0,
         				FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_REGISTERED);
             break;
 		case BOTH:
-			ret = freenect_sync_get_video_with_res((void **) &output_buffer, timestamp, 0,
+			ret = freenect_sync_get_video_with_res((void **) &output_buffer, &timestamp, 0,
         	        FREENECT_RESOLUTION_MEDIUM, FREENECT_VIDEO_RGB);
-			ret |= freenect_sync_get_depth_with_res((void **) &output_buffer[VIDEO_FRAME_MAX_SIZE]
-					, timestamp, 0, FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_REGISTERED);
+			ret |= freenect_sync_get_depth_with_res((void **) &output_buffer[VIDEO_FRAME_MAX_SIZE],
+					&timestamp, 0, FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_REGISTERED);
 			break;
     }
 

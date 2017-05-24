@@ -5,7 +5,7 @@
 
 typedef enum{
     DEPTH,
-    RGB,
+    VIDEO,
 	BOTH
 } FrameInfo;
 
@@ -20,7 +20,7 @@ public:
 
 private:
 	KinectWrapper();
-	
+
 };
 
 #endif
