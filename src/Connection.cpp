@@ -93,10 +93,11 @@ struct sockaddr_in* Connection::acceptConnection(int *new_socket){
 	return client;
 }
 
-void Connection::sendData(void *buffer, int buffer_size){
+void Connection::sendData(char *buffer, int buffer_size){
 	if (_socket){
-		if (send(_socket, buffer, buffer_size, 0) <= 0){
+		if (send(_socket, (void *) buffer, buffer_size, 0) <= 0){
 			LOG_ERROR << "failed to send data : " << strerror(errno) << endl;
+			closeConnection();
 		} else {
 			LOG_DEBUG << "sent packet, socket: " << _socket << " address: " \
 			 << _ip_address << " port: " << _port << endl;
@@ -106,23 +107,43 @@ void Connection::sendData(void *buffer, int buffer_size){
 	}
 }
 
-void Connection::recvData(void *buffer, int buffer_size){
+void Connection::recvData(char *buffer, int buffer_size){
 	int ret = 0;
 
 	if (_socket){
-		if ((ret = recv(_socket, buffer, buffer_size, 0)) <= 0){
+		if ((ret = recvChunks(buffer, buffer_size)) < 0){
 			LOG_ERROR << "failed to receive data : " << strerror(errno) << endl;
+		} else if (ret == 0) {
+			LOG_ERROR << "received 0 data, closing connection" << endl;
+			closeConnection();
 		} else {
-			LOG_DEBUG <<"received packet, ret " << ret << " socket: " << _socket << endl;
+			LOG_DEBUG <<"received " << ret << " bytes over socket " << _socket << endl;
 		}
 	} else {
 		LOG_ERROR << "failed to receive data because the socket is closed"  << endl;
 	}
 }
 
+int Connection::recvChunks(char *buffer, int buffer_size){
+	int ret = 0;
+	int recevied_bytes = 0;
+
+	while(recevied_bytes != buffer_size){
+		if ((ret = recv(_socket, (void *) &buffer[recevied_bytes]
+				, buffer_size - recevied_bytes, 0)) < 0){
+			return ret;
+		}
+
+		recevied_bytes += ret;
+	}
+
+	return recevied_bytes;
+}
+
 void Connection::closeConnection(){
 	if (_socket){
 		LOG_DEBUG << "closing socket " << _socket << endl;
 		close(_socket);
+		_socket = 0;
 	}
 }

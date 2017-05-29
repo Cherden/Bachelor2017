@@ -20,7 +20,7 @@ int main(void){
 	clock_t worst_time;
 	clock_t best_time;
 
-	kw.getData(DEPTH, frame_buffer);
+	//kw.getData(DEPTH, frame_buffer);
 	kw.getData(VIDEO, frame_buffer);
 
 	printf("running depth and rgb frame get for %d loops\n", LOOPS);
@@ -31,7 +31,7 @@ int main(void){
 	for(int i=0; i<LOOPS; i++){
 		start_time = clock();
 
-		kw.getData(DEPTH, frame_buffer);
+		//kw.getData(DEPTH, frame_buffer);
 		kw.getData(VIDEO, frame_buffer);
 
 		end_time = clock();
@@ -50,12 +50,15 @@ int main(void){
 		if (worst_time < diff_time){
 			worst_time = diff_time;
 		}
+
+		clock_t wait_time = clock() + 33333 - diff_time;
+		while (wait_time - clock()  > 0){}
 	}
 
 
-	printf("avg_time = %f milliseconds\n", (double) (avg_time) / 1000);
-	printf("best_time = %f milliseconds\n", (double) (best_time) / 1000);
-	printf("worst_time = %f milliseconds\n", (double) (worst_time) / 1000);
+	printf("avg_time = %lf milliseconds\n", (double) (avg_time) / 1000);
+	printf("best_time = %lf milliseconds\n", (double) (best_time) / 1000);
+	printf("worst_time = %lf milliseconds\n", (double) (worst_time) / 1000);
 
 
 	return 0;

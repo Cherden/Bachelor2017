@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string>
 
 #include "Connection.h"
 #include "KinectWrapper.h"
@@ -41,7 +42,7 @@ int main(void){
 		end_time = clock();
 		diff_time = end_time - start_time;
 
-		cout << "output: " << frame_buffer << endl;
+		cout << "output: " << string(frame_buffer) << endl;
 
 		if (avg_time == 0){
 			avg_time = diff_time;

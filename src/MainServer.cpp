@@ -27,7 +27,8 @@ void signalHandler(int signal)
 }
 
 int main(void){
-	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
+	//size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
+	size_t frame_buffer_size = 2*424688;
 	char frame_buffer[frame_buffer_size] = {0};
 	int client_socket = 0;
 	clock_t start_time = 0;

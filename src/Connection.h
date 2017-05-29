@@ -20,8 +20,9 @@ public:
 	Connection(int socket);
 	void createConnection(ConnectionType type);
 	struct sockaddr_in* acceptConnection(int *new_socket);
-	void sendData(void *buffer, int buffer_size);
-	void recvData(void *buffer, int buffer_size);
+	void sendData(char *buffer, int buffer_size);
+	void recvData(char *buffer, int buffer_size);
+	int recvChunks(char *buffer, int buffer_size);
 	void closeConnection();
 	~Connection();
 

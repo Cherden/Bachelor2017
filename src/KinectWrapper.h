@@ -5,14 +5,13 @@
 
 typedef enum{
     DEPTH,
-    VIDEO,
-	BOTH
+    VIDEO
 } FrameInfo;
 
 class KinectWrapper{
 public:
 	static KinectWrapper getInstance();
-    int getData(FrameInfo info, char* output_buffer);
+    int getData(FrameInfo info, IplImage* image);
 	~KinectWrapper();
 	static int getVideoFrameSize();
 	static int getDepthFrameSize();

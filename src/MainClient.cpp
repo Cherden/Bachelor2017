@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <opencv/cv.h>
+#include <opencv/highgui.h>
 
 #include "KinectWrapper.h"
 #include "Connection.h"
@@ -34,8 +36,11 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
-	size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
-	char frame_buffer[frame_buffer_size] = {0};
+	//size_t frame_buffer_size = KinectWrapper::getBufferSizeForBothFrames();
+	//size_t frame_buffer_size = 2*424688;
+	//char frame_buffer[frame_buffer_size] = {0};
+	IplImage* video_image = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_8U, 3);
+	IplImage* depth_image = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_16U, 1);
 
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
@@ -56,30 +61,33 @@ int main(void){
 
 	clock_t start_time = 0;
 	clock_t timestamp = 0;
-	clock_t end_time = 0;
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
 	while(running){
-		start_time = clock();
-
 		LOG_DEBUG << "trying to receive frame" << endl;
-		if ((ret = kinect.getData(BOTH, frame_buffer)) != 0){
+
+		start_time = clock();
+		if ((ret = kinect.getData(VIDEO, video_image)) != 0){
 			LOG_WARNING << "error on receiving frame from kinect" << endl;
 			continue;
 		}
-
 		timestamp = clock();
 		diff_time = timestamp - start_time;
-
-		LOG_DEBUG << "received frame, took " << diff_time << " ms" << endl;
 
 		con.sendData(frame_buffer, frame_buffer_size);
 
 		diff_time_total = clock() - start_time;
-		if (33333 - diff_time_total > 0){
-			usleep(33333 - diff_time_total);
-		}
+
+		printf("took %lf milliseconds\n", (double) (diff_time_total) / 1000);
+
+		LOG_DEBUG << "received frame, took "
+			<< (double) (diff_time) / 1000 << "ms "
+			<< ", " << (double) (diff_time_total) / 1000
+			<< "ms total" << endl;
+
+		clock_t wait_time = clock() + 33333 - diff_time_total;
+		while (wait_time - clock()  > 0){}
 	}
 
 	con.closeConnection();

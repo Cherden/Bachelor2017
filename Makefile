@@ -23,10 +23,13 @@ test_kinect : $(OBJ_TEST_KINECT)
 	$(CC) $(CPP_VERSION) -o test_kinect $(OBJ_TEST_KINECT) $(LFLAGS) $(LIBS)
 
 test_server : $(OBJ_TEST_SERVER)
-		$(CC) $(CPP_VERSION) -o test_server $(OBJ_TEST_SERVER) $(LFLAGS) $(LIBS)
+	$(CC) $(CPP_VERSION) -o test_server $(OBJ_TEST_SERVER) $(LFLAGS) $(LIBS)
+
+test_pic : obj/_Test.o
+	g++ -o test_pic obj/_Test.o $(LFLAGS) $(LIBS) `pkg-config --libs --cflags opencv`
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
-	\rm -f $(OBJ_DIR)/*.o server client test_kinect test_server
+	\rm -f $(OBJ_DIR)/*.o server client test_kinect test_server test_pic
