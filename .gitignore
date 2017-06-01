@@ -4,3 +4,7 @@ client
 .*
 log.txt
 *.png
+test_kinect
+test_server
+server
+client

@@ -12,9 +12,10 @@ DEBUG = -g
 CFLAGS = -Wall -c $(DEBUG)
 LFLAGS = -Wall $(DEBUG) -L/usr/local/lib/
 LIBS = -lfreenect -lfreenect_sync
+CV_LIBS = `pkg-config --libs --cflags opencv`
 
 server : $(OBJ_SERVER)
-	$(CC) $(CPP_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS)
+	$(CC) $(CPP_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS) $(CV_LIBS)
 
 client : $(OBJ_CLIENT)
 	$(CC) $(CPP_VERSION) -o client $(OBJ_CLIENT) $(LFLAGS) $(LIBS)
@@ -26,7 +27,7 @@ test_server : $(OBJ_TEST_SERVER)
 	$(CC) $(CPP_VERSION) -o test_server $(OBJ_TEST_SERVER) $(LFLAGS) $(LIBS)
 
 test_pic : obj/_Test.o
-	g++ -o test_pic obj/_Test.o $(LFLAGS) $(LIBS) `pkg-config --libs --cflags opencv`
+	$(CC) $(CPP_VERSION) -o test_pic $(OBJ_DIR)/_Test.o $(LFLAGS) $(LIBS) $(CV_LIBS)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -o $@ $<

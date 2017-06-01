@@ -76,7 +76,7 @@ void Connection::createConnection(ConnectionType type){
 	}
 }
 
-struct sockaddr_in* Connection::acceptConnection(int *new_socket){
+struct sockaddr_in* Connection::acceptConnection(int* new_socket){
 	socklen_t client_len = sizeof(struct sockaddr_in);
 	struct sockaddr_in* client = (struct sockaddr_in*) malloc(client_len);
 
@@ -93,21 +93,42 @@ struct sockaddr_in* Connection::acceptConnection(int *new_socket){
 	return client;
 }
 
-void Connection::sendData(char *buffer, int buffer_size){
+void Connection::sendData(void* buffer, size_t buffer_size){
 	if (_socket){
-		if (send(_socket, (void *) buffer, buffer_size, 0) <= 0){
+		if (send(_socket, buffer, buffer_size, 0) <= 0){
 			LOG_ERROR << "failed to send data : " << strerror(errno) << endl;
 			closeConnection();
 		} else {
-			LOG_DEBUG << "sent packet, socket: " << _socket << " address: " \
-			 << _ip_address << " port: " << _port << endl;
+			LOG_DEBUG << "sent " << buffer_size << " bytes, socket: " 
+				<< _socket << " address: " << _ip_address
+				<< " port: " << _port << endl;
 		}
 	} else {
 		LOG_ERROR << "failed to send data because the socket is closed" << endl;
 	}
 }
 
-void Connection::recvData(char *buffer, int buffer_size){
+Header Connection::peekHeader(){
+	Header h = UNKNOWN;
+	int ret = 0;
+
+	if (_socket){
+		if ((ret = recv(_socket, (void*) &h, sizeof(h), MSG_PEEK)) < 0){
+			LOG_ERROR << "failed to peek header : " << strerror(errno) << endl;
+		} else if (ret == 0) {
+			LOG_ERROR << "received 0 data, closing connection" << endl;
+			closeConnection();
+		} else {
+			LOG_DEBUG <<"received data with header " << h
+				<< " on socket " << _socket << endl;
+		}
+	} else {
+		LOG_ERROR << "failed to peek header because the socket is closed"  << endl;
+	}
+	return h;
+}
+
+void Connection::recvData(void* buffer, int buffer_size){
 	int ret = 0;
 
 	if (_socket){
@@ -124,12 +145,12 @@ void Connection::recvData(char *buffer, int buffer_size){
 	}
 }
 
-int Connection::recvChunks(char *buffer, int buffer_size){
+int Connection::recvChunks(void* buffer, int buffer_size){
 	int ret = 0;
 	int recevied_bytes = 0;
 
 	while(recevied_bytes != buffer_size){
-		if ((ret = recv(_socket, (void *) &buffer[recevied_bytes]
+		if ((ret = recv(_socket, (void*) &((char*)buffer)[recevied_bytes]
 				, buffer_size - recevied_bytes, 0)) < 0){
 			return ret;
 		}
