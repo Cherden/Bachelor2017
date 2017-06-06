@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "KinectWrapper.h"
 #include "Connection.h"
@@ -16,6 +16,7 @@
 
 
 using namespace std;
+using namespace cv;
 
 volatile bool running = true;
 void signalHandler(int signal)
@@ -28,15 +29,11 @@ void signalHandler(int signal)
 	}
 }
 
-IplImage* handleVideoFrame(Connection con, int len){
+char* handleVideoFrame(Connection con, int len, Mat* ret){
 	VideoFrame vf = {};
 	char* data = 0;
 
-	IplImage* ret = cvCreateImageHeader(cvSize(640, 480), 8, 3);
-
 	con.recvData((void *) &vf, sizeof(VideoFrame));
-	LOG_DEBUG << "VideoFrame h=" << vf.h << " sizeof=" << sizeof(VideoFrame) << endl;
-
 
 	if (vf.h != VIDEO_FRAME){
 		LOG_WARNING << "expected to receive video frame, got " << vf.h << endl;
@@ -46,18 +43,15 @@ IplImage* handleVideoFrame(Connection con, int len){
 	data = (char*) malloc(len);
 	memcpy(data, vf.data, len);
 
+	ret = new Mat(Size(640, 480), CV_8UC3, data);
+	cvtColor(*ret, *ret, CV_RGB2BGR);
 
-	cvSetData(ret, data, 640*3);
-	cvCvtColor(ret, ret, CV_RGB2BGR);
-
-	return ret;
+	return data;
 }
 
-IplImage* handleDepthFrame(Connection con, int len){
+char* handleDepthFrame(Connection con, int len, Mat* ret){
 	DepthFrame df = {};
 	char* data = 0;
-
-	IplImage* ret = cvCreateImageHeader(cvSize(640, 480), IPL_DEPTH_16U, 1);
 
 	con.recvData((void *) &df, sizeof(DepthFrame));
 
@@ -69,16 +63,16 @@ IplImage* handleDepthFrame(Connection con, int len){
 	data = (char*) malloc(len);
 	memcpy(data, df.data, len);
 
+	ret = new Mat(Size(640, 480), CV_16UC1, data);
 
-	cvSetData(ret, data, 640);
-
-	return ret;
+	return data;
 }
 
 int main(void){
 	int client_socket = 0;
 	Header h = UNKNOWN;
-	IplImage* frame = 0;
+	Mat* frame = 0;
+	char* data = 0;
 	//Connection clients[MAX_CLIENTS] = {0};
 
 	signal(SIGINT, signalHandler);
@@ -108,9 +102,9 @@ int main(void){
 			LOG_DEBUG << "FrameMessage h=" << fm.h << " info="<<fm.info <<" length="<<fm.length << " sizeof=" << sizeof(FrameMessage) << endl;
 
 			if(fm.info == VIDEO){
-				frame = handleVideoFrame(client, fm.length);
+				data = handleVideoFrame(client, fm.length, frame);
 			} else if(fm.info == DEPTH) {
-				frame = handleDepthFrame(client, fm.length);
+				data = handleDepthFrame(client, fm.length, frame);
 			} else {
 				LOG_WARNING << "received unknown frame_info " << fm.info << endl;
 				continue;
@@ -121,8 +115,10 @@ int main(void){
 		}*/
 
 		LOG_DEBUG << "try to show frame" << endl;
-		cvShowImage("Frame", frame);
-		cvFree(&frame);
+		imshow("Frame", *frame);
+
+		free(data);
+		delete(frame);
 	}
 
 	con.closeConnection();
