@@ -73,6 +73,7 @@ int main(void){
 	Header h = UNKNOWN;
 	Mat* frame = 0;
 	char* data = 0;
+	string recv_string;
 	//Connection clients[MAX_CLIENTS] = {0};
 
 	signal(SIGINT, signalHandler);
@@ -92,27 +93,18 @@ int main(void){
 	}
 	*/
 
-	//while(running){
-	for (int i = 0; i<10; i++){
-		//if ((h = client.peekHeader()) == FRAME_MESSAGE){
-			FrameMessage fm = {};
+	while(running){
+		client.recvData((void*) &recv_string, sizeof(FrameMessage));
 
-			client.recvData((void*) &fm, sizeof(FrameMessage));
 
-			LOG_DEBUG << "FrameMessage h=" << fm.h << " info="<<fm.info <<" length="<<fm.length << " sizeof=" << sizeof(FrameMessage) << endl;
-
-			if(fm.info == VIDEO){
-				data = handleVideoFrame(client, fm.length, frame);
-			} else if(fm.info == DEPTH) {
-				data = handleDepthFrame(client, fm.length, frame);
-			} else {
-				LOG_WARNING << "received unknown frame_info " << fm.info << endl;
-				continue;
-			}
-		/*} else {
-			LOG_WARNING << "received wrong header " << h << endl;
+		if(fm.info == VIDEO){
+			data = handleVideoFrame(client, fm.length, frame);
+		} else if(fm.info == DEPTH) {
+			data = handleDepthFrame(client, fm.length, frame);
+		} else {
+			LOG_WARNING << "received unknown frame_info " << fm.info << endl;
 			continue;
-		}*/
+		}
 
 		LOG_DEBUG << "try to show frame" << endl;
 		imshow("Frame", *frame);

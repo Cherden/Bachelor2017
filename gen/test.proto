@@ -1,0 +1,5 @@
+syntax = "proto2";
+
+message Frame {
+	required int64 data = 1;
+}

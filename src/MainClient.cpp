@@ -7,6 +7,8 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
+#include "../gen/MessageHeader.h"
+#include "../gen/KinectFrameMessage.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -30,7 +32,7 @@ void signalHandler(int signal)
 
 int main(void){
 	if (getuid()){
-		LOG_ERROR << "you have to be root" << endl;
+		LOG_ERROR << "you have to have root permission" << endl;
 		return -1;
 	}
 
@@ -39,6 +41,10 @@ int main(void){
 	char video_image[VIDEO_FRAME_MAX_SIZE] = {0};
 	char depth_image[DEPTH_FRAME_MAX_SIZE] = {0};
 
+	KinectFrameMessage frame_message;
+	MessageHeader header;
+	string send_string;
+
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
 	signal(SIGQUIT, signalHandler);
@@ -46,11 +52,6 @@ int main(void){
 	SET_LOG_LEVEL(LOG_LEVEL);
 
 	int ret = 0;
-
-	VideoFrame vf = {
-		.h = VIDEO_FRAME,
-		.data = {0},
-	};
 
 	/*
 		the first one always takes ~10 times the normal time (usb handshake,
@@ -69,31 +70,33 @@ int main(void){
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
-	//while(running){
-	for (int i = 0; i<10; i++){
+	while(running){
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		start_time = clock();
 		if ((ret = kinect.getData(VIDEO, vf.data)) != 0){
 			LOG_WARNING << "error on receiving video frame from kinect" << endl;
-			//continue;
+			continue;
 		}
-		/*if ((ret = kinect.getData(DEPTH, depth_image)) != 0){
+		if ((ret = kinect.getData(DEPTH, depth_image)) != 0){
 			LOG_WARNING << "error on receiving depth frame from kinect" << endl;
 			continue;
-		}*/
+		}
 		timestamp = clock();
 		diff_time = timestamp - start_time;
 
-		FrameMessage fm = {
-			.h = FRAME_MESSAGE,
-			.info = VIDEO,
-			.length = VIDEO_FRAME_MAX_SIZE,
-		};
-		LOG_DEBUG << "FrameMessage h=" << fm.h << " info="<<fm.info <<" length="<<fm.length << " sizeof=" << sizeof(FrameMessage) << endl;
-		con.sendData((void*) &fm, sizeof(fm));
-		LOG_DEBUG << "VideoFrame h=" << vf.h << " sizeof=" << sizeof(VideoFrame) << endl;
-		con.sendData((void*) &vf, sizeof(vf));
+		frame_message.set_video_data(string(video_image));
+		frame_message.set_depth_data(string(depth_image));
+		frame_message.set_timestamp(timestamp);
+
+		header.set_next(NextMessage::KINECT_FRAME_MESSAGE);
+		header.set_length(frame_message.get);
+
+		header.SerializeToString(&send_string);
+		con.sendData((void*) &send_string, send_string.size());
+
+		frame_message.SerializeToString(&send_string);
+		con.sendData((void*) &send_string, send_string.size());
 
 		diff_time_total = clock() - start_time;
 

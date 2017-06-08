@@ -15,29 +15,6 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
-typedef enum{
-	UNKNOWN,
-	FRAME_MESSAGE,
-	VIDEO_FRAME,
-	DEPTH_FRAME
-} Header;
-
-typedef struct{
-	Header h;
-	FrameInfo info;
-	int length;
-} FrameMessage;
-
-typedef struct{
-	Header h;
-	char data[VIDEO_FRAME_MAX_SIZE];
-} VideoFrame;
-
-typedef struct{
-	Header h;
-	char data[DEPTH_FRAME_MAX_SIZE];
-} DepthFrame;
-
 class Connection{
 public:
 	Connection(int port, string ip_address);
