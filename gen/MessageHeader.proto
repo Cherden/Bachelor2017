@@ -1,10 +1,10 @@
-syntax = "proto2";
+syntax = "proto3";
 
 message MessageHeader {
 	enum NextMessage {
 		KINECT_FRAME_MESSAGE;
 	}
 
-	required NextMessage next = 1;
-	required uint64 length = 2;
+	NextMessage next = 1;
+	uint64 length = 2;
 }

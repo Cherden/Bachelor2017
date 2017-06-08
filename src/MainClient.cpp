@@ -7,7 +7,6 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "../gen/MessageHeader.h"
 #include "../gen/KinectFrameMessage.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
@@ -42,7 +41,6 @@ int main(void){
 	char depth_image[DEPTH_FRAME_MAX_SIZE] = {0};
 
 	KinectFrameMessage frame_message;
-	MessageHeader header;
 	string send_string;
 
 	signal(SIGINT, signalHandler);
@@ -69,6 +67,11 @@ int main(void){
 	clock_t timestamp = 0;
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
+	
+	SerializationHeader sh = {
+		.header = SERIALIZATION_HEADER,
+		.size = 0
+	};
 
 	while(running){
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
@@ -88,14 +91,11 @@ int main(void){
 		frame_message.set_video_data(string(video_image));
 		frame_message.set_depth_data(string(depth_image));
 		frame_message.set_timestamp(timestamp);
-
-		header.set_next(NextMessage::KINECT_FRAME_MESSAGE);
-		header.set_length(frame_message.get);
-
-		header.SerializeToString(&send_string);
-		con.sendData((void*) &send_string, send_string.size());
-
 		frame_message.SerializeToString(&send_string);
+		
+		sh.size = send_string.size();
+
+		con.sendData((void*) &sh, sizeof(sh));
 		con.sendData((void*) &send_string, send_string.size());
 
 		diff_time_total = clock() - start_time;

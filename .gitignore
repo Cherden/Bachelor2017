@@ -8,3 +8,4 @@ test_kinect
 test_server
 server
 client
+gen/*.pb.*

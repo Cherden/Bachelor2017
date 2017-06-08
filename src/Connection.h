@@ -7,6 +7,8 @@
 #define CONNECTION_PORT 79421
 #define MAX_CLIENTS 1
 
+#define SERIALIZATION_HEADER 1
+
 using namespace std;
 
 typedef enum{
@@ -14,6 +16,11 @@ typedef enum{
 	SERVER,
 	CLIENT
 } ConnectionType;
+
+typedef struct{
+	int header;
+	int size;
+} SerializationHeader;
 
 class Connection{
 public:

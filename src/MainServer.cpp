@@ -7,6 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "../gen/KinectFrameMessage.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -29,51 +30,43 @@ void signalHandler(int signal)
 	}
 }
 
-char* handleVideoFrame(Connection con, int len, Mat* ret){
-	VideoFrame vf = {};
-	char* data = 0;
+Mat* video_frame;
+char* video_data;
+Mat* depth_frame;
+char* depth_data;
 
-	con.recvData((void *) &vf, sizeof(VideoFrame));
+int handleFrameMessage(Connection con, int len){
+	KinectFrameMessage frame;
+	string input_string(len, 0);
 
-	if (vf.h != VIDEO_FRAME){
-		LOG_WARNING << "expected to receive video frame, got " << vf.h << endl;
-		return NULL;
+	con.recvData((void *) &input_string[0], len);
+	frame.ParseFromString(input_string);
+
+	if (!(frame.has_video_data() || frame.has_depth_data() || frame.has_timestamp())){
+		LOG_ERROR << "message does not conatin at least one required field" << endl;
+		return -1;
 	}
+	
+	/* Create opencv matrix for video frame */
+	video_data = (char*) malloc(len);
+	memcpy(video_data, &frame.get_video_data(), len);
 
-	data = (char*) malloc(len);
-	memcpy(data, vf.data, len);
+	video_frame = new Mat(Size(640, 480), CV_8UC3, video_data);
+	cvtColor(*video_frame, *video_frame, CV_RGB2BGR);
 
-	ret = new Mat(Size(640, 480), CV_8UC3, data);
-	cvtColor(*ret, *ret, CV_RGB2BGR);
+	
+	/* Create opencv matrix for depth frame */
+	depth_data = (char*) malloc(len);
+	memcpy(depth_data, &frame.get_depth_data(), len);
 
-	return data;
-}
-
-char* handleDepthFrame(Connection con, int len, Mat* ret){
-	DepthFrame df = {};
-	char* data = 0;
-
-	con.recvData((void *) &df, sizeof(DepthFrame));
-
-	if (df.h != DEPTH_FRAME){
-		LOG_WARNING << "expected to receive depth frame, got " << df.h << endl;
-		return NULL;
-	}
-
-	data = (char*) malloc(len);
-	memcpy(data, df.data, len);
-
-	ret = new Mat(Size(640, 480), CV_16UC1, data);
-
-	return data;
+	depth_frame = new Mat(Size(640, 480), CV_16UC1, depth_data);
+	
+	return frame.get_timestamp();
 }
 
 int main(void){
 	int client_socket = 0;
-	Header h = UNKNOWN;
-	Mat* frame = 0;
-	char* data = 0;
-	string recv_string;
+	int timestamp = 0;
 	//Connection clients[MAX_CLIENTS] = {0};
 
 	signal(SIGINT, signalHandler);
@@ -93,24 +86,28 @@ int main(void){
 	}
 	*/
 
+	SerializationHeader sh = {};
+	
 	while(running){
-		client.recvData((void*) &recv_string, sizeof(FrameMessage));
+		client.recvData((void*) &sh, sizeof(sh));
 
-
-		if(fm.info == VIDEO){
-			data = handleVideoFrame(client, fm.length, frame);
-		} else if(fm.info == DEPTH) {
-			data = handleDepthFrame(client, fm.length, frame);
-		} else {
-			LOG_WARNING << "received unknown frame_info " << fm.info << endl;
-			continue;
+		if (sh.header != SERIALIZATION_HEADER){
+			LOG_WARNING << "unknown header in SerializationHeader, sh.header=" << sh.header << endl;
 		}
 
-		LOG_DEBUG << "try to show frame" << endl;
-		imshow("Frame", *frame);
+		timestamp = handleFrameMessage(client, sh.size, frame);
 
-		free(data);
-		delete(frame);
+		if (timestamp < 0) {
+			LOG_DEBUG << "not showing frame" << endl;
+		} else {
+			LOG_DEBUG << "try to show frame" << endl;
+			imshow("Frame at " << timestamp, *frame);
+
+			free(video_data);
+			free(depth_data);
+			delete video_frame;
+			delete depth_frame;
+		}
 	}
 
 	con.closeConnection();
