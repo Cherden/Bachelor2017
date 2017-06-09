@@ -1,23 +1,52 @@
 // Be sure to link with -lfreenect_sync
 #include <stdlib.h>
 #include <stdio.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "libfreenect/libfreenect_sync.h"
-int main()
-{
-	//IplImage *image = cvCreateImageHeader(cvSize(640, 480), 8, 3);
-	IplImage *image = cvCreateImageHeader(cvSize(640, 480), 8, 1);
 
+#include "../gen/KinectFrameMessage.pb.h"
+#include "KinectWrapper.h"
+
+#define VIDEO_FRAME_MAX_SIZE 307200*3
+
+using namespace cv;
+
+void fillFrameMessage(KinectFrameMessage& kfm){
 	char *data;
 	unsigned int timestamp;
+	KinectWrapper kw = KinectWrapper::getInstance();
+
+	kw.getData(VIDEO, &data);
 	//freenect_sync_get_video((void**)(&data), &timestamp, 0, FREENECT_VIDEO_RGB);
-	freenect_sync_get_depth((void**)(&data), &timestamp, 0, FREENECT_DEPTH_REGISTERED);
-	cvSetData(image, data, 640);
-	//cvCvtColor(image, image, CV_RGB2BGR);
-	cvSaveImage("foo.png",image);
+	kfm.set_video_data((void*) data, VIDEO_FRAME_MAX_SIZE);
+	kfm.set_timestamp(timestamp);
+
+	//free(data);
+}
+
+int main(){
+	Mat* frame = 0;
+	char* video_data;
+	KinectFrameMessage kfm;
+	KinectFrameMessage kfm_after;
+	string s = "";
+
+	fillFrameMessage(kfm);
+
+	kfm.SerializeToString(&s);
+
+	kfm_after.ParseFromString(s);
+
+	video_data = (char*) malloc(VIDEO_FRAME_MAX_SIZE);
+	memcpy(video_data, kfm_after.video_data().c_str(), VIDEO_FRAME_MAX_SIZE);
+
+	frame = new Mat(Size(640, 480), CV_8UC3, video_data);
+	cvtColor(*frame, *frame, CV_RGB2BGR);
+	imwrite("foo.png", *frame);
 
 	freenect_sync_stop();
-	cvFree(&image);
+	free(video_data);
+	delete frame;
 	return EXIT_SUCCESS;
 }

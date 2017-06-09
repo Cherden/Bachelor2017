@@ -3,7 +3,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,20 +94,20 @@ struct sockaddr_in* Connection::acceptConnection(int* new_socket){
 
 void Connection::sendData(void* buffer, size_t buffer_size){
 	if (_socket){
-		if (send(_socket, buffer, buffer_size, 0) <= 0){
+		if (send(_socket, buffer, buffer_size, MSG_NOSIGNAL) <= 0){
 			LOG_ERROR << "failed to send data : " << strerror(errno) << endl;
 			closeConnection();
 		} else {
-			LOG_DEBUG << "sent " << buffer_size << " bytes, socket: " 
+			LOG_DEBUG << "sent " << buffer_size << " bytes, socket: "
 				<< _socket << " address: " << _ip_address
 				<< " port: " << _port << endl;
 		}
 	} else {
-		LOG_ERROR << "failed to send data because the socket is closed" << endl;
+		LOG_ERROR << "failed to send data because the socket closed" << endl;
 	}
 }
 
-Header Connection::peekHeader(){
+/*Header Connection::peekHeader(){
 	Header h = UNKNOWN;
 	int ret = 0;
 
@@ -126,14 +125,16 @@ Header Connection::peekHeader(){
 		LOG_ERROR << "failed to peek header because the socket is closed"  << endl;
 	}
 	return h;
-}
+}*/
 
 void Connection::recvData(void* buffer, int buffer_size){
 	int ret = 0;
 
 	if (_socket){
 		if ((ret = recvChunks(buffer, buffer_size)) < 0){
+		//if ((ret = recv(_socket, buffer, buffer_size, MSG_WAITALL)) < 0){
 			LOG_ERROR << "failed to receive data : " << strerror(errno) << endl;
+			closeConnection();
 		} else if (ret == 0) {
 			LOG_ERROR << "received 0 data, closing connection" << endl;
 			closeConnection();
@@ -141,7 +142,7 @@ void Connection::recvData(void* buffer, int buffer_size){
 			LOG_DEBUG <<"received " << ret << " bytes over socket " << _socket << endl;
 		}
 	} else {
-		LOG_ERROR << "failed to receive data because the socket is closed"  << endl;
+		LOG_ERROR << "failed to receive data because the socket closed"  << endl;
 	}
 }
 
@@ -150,21 +151,29 @@ int Connection::recvChunks(void* buffer, int buffer_size){
 	int recevied_bytes = 0;
 
 	while(recevied_bytes != buffer_size){
-		if ((ret = recv(_socket, (void*) &((char*)buffer)[recevied_bytes]
-				, buffer_size - recevied_bytes, 0)) < 0){
-			return ret;
-		}
+		if (_socket){
+			if ((ret = recv(_socket, (void*) &((char*)buffer)[recevied_bytes]
+					, buffer_size - recevied_bytes, 0)) < 0){
+				return ret;
+			}
 
-		recevied_bytes += ret;
+			recevied_bytes += ret;
+		} else {
+			return 0;
+		}
 	}
 
 	return recevied_bytes;
 }
 
 void Connection::closeConnection(){
+	LOG_DEBUG << "closing socket " << _socket << endl;
 	if (_socket){
-		LOG_DEBUG << "closing socket " << _socket << endl;
 		close(_socket);
 		_socket = 0;
 	}
+}
+
+int Connection::isClosed(){
+	return _socket==0;
 }

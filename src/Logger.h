@@ -9,7 +9,7 @@
 using namespace std;
 
 #define LOGGING_ENABLED
-#define CONSOLE_LOGGING
+//#define CONSOLE_LOGGING
 
 #ifdef LOGGING_ENABLED
 #ifdef CONSOLE_LOGGING

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 message MessageHeader {
 	enum NextMessage {
-		KINECT_FRAME_MESSAGE;
+		KINECT_FRAME_MESSAGE = 0;
 	}
 
 	NextMessage next = 1;

@@ -2,6 +2,7 @@
 #define _CONNECTION_H_
 
 #include <string>
+#include <arpa/inet.h>
 #include "KinectWrapper.h"
 
 #define CONNECTION_PORT 79421
@@ -29,9 +30,10 @@ public:
 	void createConnection(ConnectionType type);
 	struct sockaddr_in* acceptConnection(int* new_socket);
 	void sendData(void* buffer, size_t buffer_size);
-	Header peekHeader();
+	//Header peekHeader();
 	void recvData(void* buffer, int buffer_size);
 	int recvChunks(void* buffer, int buffer_size);
+	int isClosed();
 	void closeConnection();
 	~Connection();
 

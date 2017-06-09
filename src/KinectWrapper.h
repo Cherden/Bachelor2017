@@ -14,7 +14,7 @@ typedef enum{
 class KinectWrapper{
 public:
 	static KinectWrapper getInstance();
-    int getData(FrameInfo info, char* data);
+    int getData(FrameInfo info, char** data);
 	~KinectWrapper();
 
 private:

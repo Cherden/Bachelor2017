@@ -4,10 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
 
-#include "../gen/KinectFrameMessage.h"
+#include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -19,12 +17,10 @@
 using namespace std;
 
 volatile bool running = true;
-void signalHandler(int signal)
-{
+void signalHandler(int signal){
 	if (signal == SIGINT
 	 || signal == SIGTERM
-	 || signal == SIGQUIT)
-	{
+	 || signal == SIGQUIT){
 		running = false;
 	}
 }
@@ -37,11 +33,11 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
-	char video_image[VIDEO_FRAME_MAX_SIZE] = {0};
-	char depth_image[DEPTH_FRAME_MAX_SIZE] = {0};
+	char* video_image;
+	char* depth_image;
 
 	KinectFrameMessage frame_message;
-	string send_string;
+	void* send_data = 0;
 
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
@@ -56,8 +52,8 @@ int main(void){
 		resync etc.), so just do it once before the "real" program starts
 	*/
 	LOG_DEBUG << "handle usb handshake..." << endl;
-	kinect.getData(VIDEO, video_image);
-	kinect.getData(DEPTH, depth_image);
+	kinect.getData(VIDEO, &video_image);
+	kinect.getData(DEPTH, &depth_image);
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	Connection con(CONNECTION_PORT, "192.168.1.2");
@@ -67,36 +63,51 @@ int main(void){
 	clock_t timestamp = 0;
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
-	
-	SerializationHeader sh = {
+
+	/*SerializationHeader sh = {
 		.header = SERIALIZATION_HEADER,
 		.size = 0
-	};
+	};*/
 
 	while(running){
+		if (con.isClosed()){
+			break;
+		}
+
+		frame_message.clear_video_data();
+		frame_message.clear_depth_data();
+		frame_message.clear_timestamp();
+
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		start_time = clock();
-		if ((ret = kinect.getData(VIDEO, vf.data)) != 0){
+		if ((ret = kinect.getData(VIDEO, &video_image)) != 0){
 			LOG_WARNING << "error on receiving video frame from kinect" << endl;
 			continue;
 		}
-		if ((ret = kinect.getData(DEPTH, depth_image)) != 0){
+		if ((ret = kinect.getData(DEPTH, &depth_image)) != 0){
 			LOG_WARNING << "error on receiving depth frame from kinect" << endl;
 			continue;
 		}
 		timestamp = clock();
 		diff_time = timestamp - start_time;
 
-		frame_message.set_video_data(string(video_image));
-		frame_message.set_depth_data(string(depth_image));
+		frame_message.set_video_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		frame_message.set_depth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 		frame_message.set_timestamp(timestamp);
-		frame_message.SerializeToString(&send_string);
-		
-		sh.size = send_string.size();
 
-		con.sendData((void*) &sh, sizeof(sh));
-		con.sendData((void*) &send_string, send_string.size());
+		uint32_t size = frame_message.ByteSize();
+		LOG_DEBUG << "serialized data size is " << size << endl;
+
+		send_data = malloc(size);
+		frame_message.SerializeToArray(send_data, size);
+
+		uint32_t size_nw = htonl(size);
+		con.sendData((void*) &size_nw, 4);
+		con.sendData(send_data, size);
+
+		free(send_data);
+
 
 		diff_time_total = clock() - start_time;
 
@@ -109,7 +120,7 @@ int main(void){
 
 		clock_t wait_time = clock() + 33333 - diff_time_total;
 		//while (wait_time - clock()  > 0){}
-		usleep(wait_time);
+		//usleep(wait_time);
 	}
 
 	con.closeConnection();

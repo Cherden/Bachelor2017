@@ -7,7 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "../gen/KinectFrameMessage.h"
+#include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -35,33 +35,37 @@ char* video_data;
 Mat* depth_frame;
 char* depth_data;
 
-int handleFrameMessage(Connection con, int len){
+int handleFrameMessage(Connection& con, int len){
 	KinectFrameMessage frame;
-	string input_string(len, 0);
+	char* buf = (char*) malloc(len);
 
-	con.recvData((void *) &input_string[0], len);
-	frame.ParseFromString(input_string);
+	con.recvData((void *) buf, len);
+	frame.ParseFromArray(buf, len);
 
-	if (!(frame.has_video_data() || frame.has_depth_data() || frame.has_timestamp())){
-		LOG_ERROR << "message does not conatin at least one required field" << endl;
+	/*if (!(frame.video_data() == "" || frame.depth_data() == ""
+	 	|| frame.timestamp() == 0)){
+		LOG_ERROR << "message does not contain at least one required field" << endl;
 		return -1;
-	}
-	
+	}*/
+
 	/* Create opencv matrix for video frame */
-	video_data = (char*) malloc(len);
-	memcpy(video_data, &frame.get_video_data(), len);
+	video_data = (char*) malloc(VIDEO_FRAME_MAX_SIZE);
+	memcpy(video_data, frame.video_data().c_str(), VIDEO_FRAME_MAX_SIZE);
 
 	video_frame = new Mat(Size(640, 480), CV_8UC3, video_data);
 	cvtColor(*video_frame, *video_frame, CV_RGB2BGR);
 
-	
+
 	/* Create opencv matrix for depth frame */
-	depth_data = (char*) malloc(len);
-	memcpy(depth_data, &frame.get_depth_data(), len);
+	/*depth_data = (char*) malloc(DEPTH_FRAME_MAX_SIZE);
+	memcpy(depth_data, &frame.depth_data(), DEPTH_FRAME_MAX_SIZE);
 
 	depth_frame = new Mat(Size(640, 480), CV_16UC1, depth_data);
-	
-	return frame.get_timestamp();
+	LOG_DEBUG << "test" << endl;*/
+
+	free(buf);
+
+	return frame.timestamp();
 }
 
 int main(void){
@@ -86,27 +90,40 @@ int main(void){
 	}
 	*/
 
-	SerializationHeader sh = {};
-	
-	while(running){
-		client.recvData((void*) &sh, sizeof(sh));
+	//SerializationHeader sh = {};
+	uint32_t size = 0;
 
-		if (sh.header != SERIALIZATION_HEADER){
-			LOG_WARNING << "unknown header in SerializationHeader, sh.header=" << sh.header << endl;
+	namedWindow("Frame", WINDOW_AUTOSIZE );
+	while(running){
+		if (client.isClosed()){
+			break;
 		}
 
-		timestamp = handleFrameMessage(client, sh.size, frame);
+		client.recvData((void*) &size, 4);
+		size = ntohl(size);
+
+		/*if (sh.header != SERIALIZATION_HEADER){
+			LOG_WARNING << "unknown header in SerializationHeader, sh.header=" << sh.header << endl;
+		} else {*/
+		LOG_DEBUG << "next KinectFrameMessage protobuf size is " << size << endl;
+		//}
+
+		timestamp = handleFrameMessage(client, size);
 
 		if (timestamp < 0) {
 			LOG_DEBUG << "not showing frame" << endl;
 		} else {
 			LOG_DEBUG << "try to show frame" << endl;
-			imshow("Frame at " << timestamp, *frame);
+			imshow("Frame", *video_frame);
+			cvWaitKey(10);
+			//imwrite("recv.png", *video_frame);
+
+			LOG_DEBUG << "Timestamp = " << timestamp << endl;
 
 			free(video_data);
-			free(depth_data);
 			delete video_frame;
-			delete depth_frame;
+			/*free(depth_data);
+			delete depth_frame;*/
 		}
 	}
 
