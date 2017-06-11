@@ -80,7 +80,7 @@ int main(void){
 	Connection con(CONNECTION_PORT, "127.0.0.1");
 	con.createConnection(SERVER);
 
-	con.acceptConnection(&client_socket);
+	client_socket = con.acceptConnection(NULL);
 	Connection client(client_socket);
 
 	/*

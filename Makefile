@@ -4,7 +4,6 @@ CXX_VERSION 	= 	-std=c++11
 CFLAGS 			= 	-Wall -c -g
 LFLAGS 			= 	-Wall -g -L/usr/local/lib/
 LIBS 			= 	-lfreenect -lfreenect_sync -lprotobuf `pkg-config --libs --cflags opencv`
-#V_LIB 			= 	`pkg-config --libs --cflags opencv`
 
 
 OBJ_DIR 		=	obj
@@ -18,14 +17,14 @@ OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o $(OBJ)
 OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ))
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))
 OBJ_TEST_SERVER = 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestServer.o $(OBJ))
-OBJ_TEST_PIC	= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, _Test.o $(OBJ))
+OBJ_TEST_PIC	= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, TestPic.o $(OBJ))
 
 
 
 
 
 server : $(OBJ_SERVER)
-	$(CXX) $(CXX_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS) #$(CV_LIB)
+	$(CXX) $(CXX_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS)
 
 client : $(OBJ_CLIENT)
 	$(CXX) $(CXX_VERSION) -o client $(OBJ_CLIENT) $(LFLAGS) $(LIBS)
@@ -37,7 +36,7 @@ test_server : $(OBJ_TEST_SERVER)
 	$(CXX) $(CXX_VERSION) -o test_server $(OBJ_TEST_SERVER) $(LFLAGS) $(LIBS)
 
 test_pic : $(OBJ_TEST_PIC)
-	$(CXX) $(CXX_VERSION) -o test_pic $(OBJ_TEST_PIC) $(LFLAGS) $(LIBS) #$(CV_LIBS)
+	$(CXX) $(CXX_VERSION) -o test_pic $(OBJ_TEST_PIC) $(LFLAGS) $(LIBS)
 
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
