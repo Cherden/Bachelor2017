@@ -21,8 +21,6 @@ OBJ_TEST_PIC	= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, TestPic.o $(OBJ))
 
 
 
-
-
 server : $(OBJ_SERVER)
 	$(CXX) $(CXX_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS)
 

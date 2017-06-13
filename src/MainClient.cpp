@@ -64,11 +64,6 @@ int main(void){
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
-	/*SerializationHeader sh = {
-		.header = SERIALIZATION_HEADER,
-		.size = 0
-	};*/
-
 	while(running){
 		if (con.isClosed()){
 			break;
@@ -82,11 +77,11 @@ int main(void){
 
 		start_time = clock();
 		if ((ret = kinect.getData(VIDEO, &video_image)) != 0){
-			LOG_WARNING << "error on receiving video frame from kinect" << endl;
+			LOG_WARNING << "could not receive video frame from kinect" << endl;
 			continue;
 		}
 		if ((ret = kinect.getData(DEPTH, &depth_image)) != 0){
-			LOG_WARNING << "error on receiving depth frame from kinect" << endl;
+			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
 		timestamp = clock();
@@ -110,8 +105,6 @@ int main(void){
 
 
 		diff_time_total = clock() - start_time;
-
-		printf("took %lf milliseconds\n", (double) (diff_time_total) / 1000);
 
 		LOG_DEBUG << "received frame, took "
 			<< (double) (diff_time) / 1000 << "ms, "
