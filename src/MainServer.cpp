@@ -96,7 +96,6 @@ void handleClient(int socket, int place){
 			LOG_DEBUG << "try to show frame" << endl;
 			imshow("Frame", *video_frame);
 			cvWaitKey(10);
-			//imwrite("recv.png", *video_frame);
 
 			LOG_DEBUG << "Timestamp = " << timestamp << endl;
 
@@ -145,7 +144,7 @@ int main(void){
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, ref(con), &amount_clients);
 	accept_clients.detach();
-	
+
 	while (running){
 
 	}
