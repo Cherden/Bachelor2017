@@ -36,6 +36,8 @@ test_server : $(OBJ_TEST_SERVER)
 test_pic : $(OBJ_TEST_PIC)
 	$(CXX) $(CXX_VERSION) -o test_pic $(OBJ_TEST_PIC) $(LFLAGS) $(LIBS)
 
+proto : $(PROTO_OBJS)
+
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
 	$(CXX) $(CFLAGS) $< -o $@

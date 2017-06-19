@@ -4,7 +4,12 @@ message KinectFrameMessage {
 	bytes video_data = 1;
 	bytes depth_data = 2;
 	uint32 timestamp = 3;
-	uint32 height = 4;
-	uint32 width = 5;
-	uint32 depth = 6;
+
+	uint32 video_height = 4;
+	uint32 video_width = 5;
+	uint32 video_depth = 6;
+
+	uint32 depth_height = 7;
+	uint32 depth_width = 8;
+	uint32 depth_depth = 9;
 }

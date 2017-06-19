@@ -8,7 +8,6 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "../gen/KinectFrameMessage.pb.h"
-#include "KinectWrapper.h"
 #include "Connection.h"
 #include "Logger.h"
 
@@ -42,11 +41,13 @@ int handleFrameMessage(Connection& con, int len){
 	con.recvData((void *) buf, len);
 	frame.ParseFromArray(buf, len);
 
-	/*if (!(frame.video_data() == "" || frame.depth_data() == ""
+	/*
+	if (!(frame.video_data() == "" || frame.depth_data() == ""
 	 	|| frame.timestamp() == 0)){
 		LOG_ERROR << "message does not contain at least one required field" << endl;
 		return -1;
-	}*/
+	}
+	*/
 
 	/* Create opencv matrix for video frame */
 	video_data = (char*) malloc(VIDEO_FRAME_MAX_SIZE);
@@ -90,8 +91,7 @@ int main(void){
 	}
 	*/
 
-	//SerializationHeader sh = {};
-	uint32_t size = 0;
+	uint64_t size = 0;
 
 	namedWindow("Frame", WINDOW_AUTOSIZE );
 	while(running){
@@ -102,11 +102,7 @@ int main(void){
 		client.recvData((void*) &size, 4);
 		size = ntohl(size);
 
-		/*if (sh.header != SERIALIZATION_HEADER){
-			LOG_WARNING << "unknown header in SerializationHeader, sh.header=" << sh.header << endl;
-		} else {*/
-		LOG_DEBUG << "next KinectFrameMessage protobuf size is " << size << endl;
-		//}
+		LOG_DEBUG << "next protobuf message size is " << size << endl;
 
 		timestamp = handleFrameMessage(client, size);
 
