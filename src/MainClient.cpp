@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <google/protobuf/arena.h>
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
@@ -15,6 +16,7 @@
 
 
 using namespace std;
+using namespace google::protobuf;
 
 volatile bool running = true;
 void signalHandler(int signal){
@@ -36,7 +38,8 @@ int main(void){
 	char* video_image;
 	char* depth_image;
 
-	KinectFrameMessage frame_message;
+  	KinectFrameMessage frame_message;
+
 	void* send_data = 0;
 
 	signal(SIGINT, signalHandler);
@@ -64,14 +67,20 @@ int main(void){
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
+	frame_message.fvideo_size(VIDEO_FRAME_MAX_SIZE);
+	frame_message.fvideo_height(VIDEO_FRAME_HEIGHT);
+	frame_message.fvideo_width(VIDEO_FRAME_WIDTH);
+	frame_message.fvideo_depth(VIDEO_FRAME_DEPTH);
+
+	frame_message.fdepth_size(DEPTH_FRAME_MAX_SIZE);
+	frame_message.fdepth_height(DEPTH_FRAME_HEIGHT);
+	frame_message.fdepth_width(DEPTH_FRAME_WIDTH);
+	frame_message.fdepth_depth(DEPTH_FRAME_DEPTH);
+
 	while(running){
 		if (con.isClosed()){
 			break;
 		}
-
-		frame_message.clear_video_data();
-		frame_message.clear_depth_data();
-		frame_message.clear_timestamp();
 
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
@@ -87,8 +96,8 @@ int main(void){
 		timestamp = clock();
 		diff_time = timestamp - start_time;
 
-		frame_message.set_video_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
-		frame_message.set_depth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
+		frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 		frame_message.set_timestamp(timestamp);
 
 		uint32_t size = frame_message.ByteSize();
