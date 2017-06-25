@@ -23,11 +23,6 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
-typedef struct{
-	int header;
-	int size;
-} SerializationHeader;
-
 class Connection{
 public:
 	/**
