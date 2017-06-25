@@ -16,7 +16,6 @@
 
 
 using namespace std;
-using namespace google::protobuf;
 
 volatile bool running = true;
 void signalHandler(int signal){
@@ -59,8 +58,8 @@ int main(void){
 	kinect.getData(DEPTH, &depth_image);
 
 	LOG_DEBUG << "try to create connection..." << endl;
-	Connection con(CONNECTION_PORT, "192.168.1.2");
-	con.createConnection(CLIENT);
+	Connection con();
+	con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2");
 
 	clock_t start_time = 0;
 	clock_t timestamp = 0;

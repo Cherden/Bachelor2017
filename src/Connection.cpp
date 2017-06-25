@@ -10,17 +10,15 @@
 
 using namespace std;
 
-Connection::Connection(int port, string ip_address)
- : _port(port)
- , _ip_address(ip_address)
- , _socket(0)
- , _type(UNDEFINED) {}
+Connection::Connection()
+	: _socket(0)
+	, _type(UNDEFINED)
+	, _info({}) {}
 
 Connection::Connection(int socket)
- : _port(0)
- , _ip_address("")
- , _socket(socket)
- , _type(SERVER) {}
+	: _socket(socket)
+	, _type(CLIENT)
+	, _info({}) {}
 
 Connection::~Connection(){
 	if (_socket){
@@ -28,7 +26,7 @@ Connection::~Connection(){
 	}
 }
 
-int Connection::createConnection(ConnectionType type){
+int Connection::createConnection(ConnectionType type, int port, string ip_address){
 	struct sockaddr_in me;
 
 	memset((void*) &me, 0, sizeof(me));
@@ -46,13 +44,13 @@ int Connection::createConnection(ConnectionType type){
 		return -1;
 	}
 
-	me.sin_family = AF_INET;
-	me.sin_port = htons(_port);
+	_info.sin_family = AF_INET;
+	_info.sin_port = htons(port);
 
 	if (_type == SERVER){
-		me.sin_addr.s_addr = INADDR_ANY;
+		_info.sin_addr.s_addr = INADDR_ANY;
 
-		if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
+		if (bind(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 			LOG_ERROR << "failed to bind the socket, strerror : "
 				<< strerror(errno) << endl;
 
@@ -65,9 +63,9 @@ int Connection::createConnection(ConnectionType type){
 		LOG_DEBUG << "server socket succesfully created, listening " << _socket
 			<< endl;
 	} else if (_type == CLIENT){
-		inet_aton(_ip_address.c_str(), &me.sin_addr);
+		inet_aton(ip_address.c_str(), &_info.sin_addr);
 
-		if (connect(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
+		if (connect(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 			LOG_ERROR << "failed to connect to server, strerror : "
 				<< strerror(errno) << endl;
 
@@ -84,7 +82,7 @@ int Connection::createConnection(ConnectionType type){
 
 /*	DEPRECATED VERSION
 
-	struct sockaddr_in* Connection::acceptConnection(int* new_socket){
+struct sockaddr_in* Connection::acceptConnection(int* new_socket){
 	socklen_t client_len = sizeof(struct sockaddr_in);
 	struct sockaddr_in* client = (struct sockaddr_in*) malloc(client_len);
 
@@ -115,12 +113,13 @@ int Connection::acceptConnection(struct sockaddr_in* new_client){
 
 	LOG_DEBUG << "waiting to accept new client on " << _socket << endl;
 
-	if ((socket = accept(_socket, (struct sockaddr*) new_client
-			, &client_size)) < 0){
-
-		LOG_WARNING << "accepting new client failed, strerror : "
+	if ((socket = accept4(_socket, (struct sockaddr*) new_client
+			, &client_size), SOCK_NONBLOCK) < 0){				
+		if (!(socket == EAGAIN || socket == EWOULDBLOCK)){
+			LOG_WARNING << "accepting new client failed, strerror : "
 			<< strerror(errno) << endl;
-
+		}
+		
 		return -1;
 	}
 
@@ -139,8 +138,7 @@ void Connection::sendData(void* buffer, size_t buffer_size){
 			closeConnection();
 		} else {
 			LOG_DEBUG << "sent " << buffer_size << " bytes, socket: "
-				<< _socket << " address: " << _ip_address
-				<< " port: " << _port << endl;
+				<< _socket << endl;
 		}
 	} else {
 		LOG_ERROR << "failed to send data because the socket closed" << endl;
@@ -225,6 +223,10 @@ int Connection::_recvChunks(void* buffer, int buffer_size){
 	}
 
 	return recevied_bytes;
+}
+
+void Connection::setInfo(struct sockaddr_in* info){
+	memcpy(&_info, info, sizeof(struct sockaddr_in));
 }
 
 void Connection::closeConnection(){
