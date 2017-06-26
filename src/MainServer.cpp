@@ -58,11 +58,11 @@ int handleFrameMessage(Connection& con, int len){
 
 
 	/* Create opencv matrix for depth frame */
-	/*depth_data = (char*) malloc(DEPTH_FRAME_MAX_SIZE);
-	memcpy(depth_data, &frame.depth_data(), DEPTH_FRAME_MAX_SIZE);
+	depth_data = (char*) malloc(DEPTH_FRAME_MAX_SIZE);
+	memcpy(depth_data, frame.depth_data().c_str(), DEPTH_FRAME_MAX_SIZE);
 
 	depth_frame = new Mat(Size(640, 480), CV_16UC1, depth_data);
-	LOG_DEBUG << "test" << endl;*/
+	depth_frame->convertTo(*depth_frame, CV_8UC1, 255.0/2048.0);
 
 	free(buf);
 
@@ -93,7 +93,8 @@ int main(void){
 
 	uint64_t size = 0;
 
-	namedWindow("Frame", WINDOW_AUTOSIZE );
+	namedWindow("rgb", CV_WINDOW_AUTOSIZE );
+	namedWindow("depth", CV_WINDOW_AUTOSIZE );
 	while(running){
 		if (client.isClosed()){
 			break;
@@ -110,16 +111,17 @@ int main(void){
 			LOG_DEBUG << "not showing frame" << endl;
 		} else {
 			LOG_DEBUG << "try to show frame" << endl;
-			imshow("Frame", *video_frame);
+
+			imshow("rgb", *video_frame);
+			imshow("depth", *depth_frame);
 			cvWaitKey(10);
-			//imwrite("recv.png", *video_frame);
 
 			LOG_DEBUG << "Timestamp = " << timestamp << endl;
 
 			free(video_data);
 			delete video_frame;
-			/*free(depth_data);
-			delete depth_frame;*/
+			free(depth_data);
+			delete depth_frame;
 		}
 	}
 

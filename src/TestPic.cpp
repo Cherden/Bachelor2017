@@ -7,46 +7,65 @@
 
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
+#include "Logger.h"
 
-#define VIDEO_FRAME_MAX_SIZE 307200*3
 
 using namespace cv;
-
-void fillFrameMessage(KinectFrameMessage& kfm){
-	char *data;
-	unsigned int timestamp;
-	KinectWrapper kw = KinectWrapper::getInstance();
-
-	kw.getData(VIDEO, &data);
-	//freenect_sync_get_video((void**)(&data), &timestamp, 0, FREENECT_VIDEO_RGB);
-	kfm.set_video_data((void*) data, VIDEO_FRAME_MAX_SIZE);
-	kfm.set_timestamp(timestamp);
-
-	//free(data);
-}
+using namespace std;
 
 int main(){
-	Mat* frame = 0;
+	KinectWrapper kinect = KinectWrapper::getInstance();
+	int ret = 0;
+
+	Mat* video_frame;
 	char* video_data;
-	KinectFrameMessage kfm;
-	KinectFrameMessage kfm_after;
-	string s = "";
+	Mat* depth_frame;
+	char* depth_data;
 
-	fillFrameMessage(kfm);
+	KinectFrameMessage frame_message;
+	KinectFrameMessage tes;
 
-	kfm.SerializeToString(&s);
+	namedWindow("rgb",CV_WINDOW_AUTOSIZE);
+	namedWindow("depth",CV_WINDOW_AUTOSIZE);
+	while(1){
+		if ((ret = kinect.getData(VIDEO, &video_data)) != 0){
+			LOG_WARNING << "could not receive video frame from kinect" << endl;
+			continue;
+		}
+		if ((ret = kinect.getData(DEPTH, &depth_data)) != 0){
+			LOG_WARNING << "could not receive depth frame from kinect" << endl;
+			continue;
+		}
 
-	kfm_after.ParseFromString(s);
+		/*frame_message.set_video_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		frame_message.set_depth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 
-	video_data = (char*) malloc(VIDEO_FRAME_MAX_SIZE);
-	memcpy(video_data, kfm_after.video_data().c_str(), VIDEO_FRAME_MAX_SIZE);
+		frame_message.SerializeToArray(send_data, frame_message.ByteSize());
 
-	frame = new Mat(Size(640, 480), CV_8UC3, video_data);
-	cvtColor(*frame, *frame, CV_RGB2BGR);
-	imwrite("foo.png", *frame);
+		tes.ParseFromArray(send_data);*/
 
-	freenect_sync_stop();
-	free(video_data);
-	delete frame;
+		video_frame = new Mat(Size(640, 480), CV_8UC3, video_data);
+		cvtColor(*video_frame, *video_frame, CV_RGB2BGR);
+
+
+		char* depth = (char*) malloc(DEPTH_FRAME_MAX_SIZE);
+		memcpy(depth, depth_data, DEPTH_FRAME_MAX_SIZE);
+
+		depth_frame = new Mat(Size(640, 480), CV_16UC1, depth);
+
+		Mat depthf (Size(640, 480), CV_8UC1);
+		depth_frame->convertTo(depthf, CV_8UC1, 255.0/2048.0);
+
+		imshow("rgb", *video_frame);
+		imshow("depth", depthf);
+
+		cvWaitKey(10);
+
+		delete video_frame;
+		delete depth_frame;
+		free(depth);
+	}
+
+
 	return EXIT_SUCCESS;
 }

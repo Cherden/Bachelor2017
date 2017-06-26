@@ -17,7 +17,7 @@ typedef enum{
 /**
 	The size of data for one depth frame
 */
-#define DEPTH_FRAME_MAX_SIZE 422400 	//640*480*1.375
+#define DEPTH_FRAME_MAX_SIZE 640*480*2
 
 class KinectWrapper{
 public:
