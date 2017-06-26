@@ -34,8 +34,11 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
-	char* video_image;
-	char* depth_image;
+	char video_image[VIDEO_FRAME_MAX_SIZE] = {0};
+	char depth_image[DEPTH_FRAME_MAX_SIZE] = {0};
+
+	char* video_ptr = &video_image[0];
+	char* depth_ptr = &depth_image[0];
 
   	KinectFrameMessage frame_message;
 
@@ -54,11 +57,11 @@ int main(void){
 		resync etc.), so just do it once before the "real" program starts
 	*/
 	LOG_DEBUG << "handle usb handshake..." << endl;
-	kinect.getData(VIDEO, &video_image);
-	kinect.getData(DEPTH, &depth_image);
+	kinect.getData(VIDEO, &video_ptr);
+	kinect.getData(DEPTH, &depth_ptr);
 
 	LOG_DEBUG << "try to create connection..." << endl;
-	Connection con();
+	Connection con;
 	con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2");
 
 	clock_t start_time = 0;
@@ -66,15 +69,15 @@ int main(void){
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
-	frame_message.fvideo_size(VIDEO_FRAME_MAX_SIZE);
-	frame_message.fvideo_height(VIDEO_FRAME_HEIGHT);
-	frame_message.fvideo_width(VIDEO_FRAME_WIDTH);
-	frame_message.fvideo_depth(VIDEO_FRAME_DEPTH);
+	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
+	frame_message.set_fvideo_height(VIDEO_FRAME_HEIGHT);
+	frame_message.set_fvideo_width(VIDEO_FRAME_WIDTH);
+	frame_message.set_fvideo_depth(VIDEO_FRAME_DEPTH);
 
-	frame_message.fdepth_size(DEPTH_FRAME_MAX_SIZE);
-	frame_message.fdepth_height(DEPTH_FRAME_HEIGHT);
-	frame_message.fdepth_width(DEPTH_FRAME_WIDTH);
-	frame_message.fdepth_depth(DEPTH_FRAME_DEPTH);
+	frame_message.set_fdepth_size(DEPTH_FRAME_MAX_SIZE);
+	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
+	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
+	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
 
 	while(running){
 		if (con.isClosed()){
@@ -84,18 +87,21 @@ int main(void){
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		start_time = clock();
-		if ((ret = kinect.getData(VIDEO, &video_image)) != 0){
+		if ((ret = kinect.getData(VIDEO, &video_ptr)) != 0){
 			LOG_WARNING << "could not receive video frame from kinect" << endl;
 			continue;
 		}
-		if ((ret = kinect.getData(DEPTH, &depth_image)) != 0){
+		if ((ret = kinect.getData(DEPTH, &depth_ptr)) != 0){
 			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
 		timestamp = clock();
 		diff_time = timestamp - start_time;
 
+
+		LOG_DEBUG << "test " << endl;
 		frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		LOG_DEBUG << "test2 " << endl;
 		frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 		frame_message.set_timestamp(timestamp);
 

@@ -2,43 +2,55 @@
 
 #include <iostream>
 
+#include "Logger.h"
+#include "../gen/KinectFrameMessage.pb.h"
+
 Client::Client(int socket)
 	: _con(socket)
 	, _video({})
 	, _depth({})
+	, _processed(0)
 	, _running(1)
 	, _data_mutex()
-	, _client_thread(&Client::_threadHandle, this){ }
+	, _client_thread(&Client::_threadHandle, this) {}
 
 Client::~Client(){
 	_running = 0;
 	_con.closeConnection();
 	_clearData();
-	client_thread.join();
+	_client_thread.join();
 }
 
 void Client::setInfo(struct sockaddr_in* info){
-	con.setInfo(info);
+	_con.setInfo(info);
 }
 
-Mat Client::getVideoMatrix(){
-	Mat ret;
-	
+int Client::lockData(){
+	if (_processed){
+		return -1;
+	}
+
 	_data_mutex.lock();
-	ret = _video.frame->clone();
-	_data_mutex.unlock();
-	
-	return ret;
+	return 0;
 }
 
-Mat Client::getDepthMatrix(){
-	Mat ret;
-	
-	_data_mutex.lock();
-	ret = _depth.frame->clone();
+void Client::releaseData(){
 	_data_mutex.unlock();
-	
-	return ret;
+}
+
+int Client::getData(Mat* video, Mat* depth){
+	if (_data_mutex.try_lock()){
+		_data_mutex.unlock();
+		LOG_WARNING << "tried to get client data with unlocked mutex" << endl;
+		return -1;
+	}
+
+	video = _video.frame;
+	depth = _depth.frame;
+
+	_processed = 1;
+
+	return 0;
 }
 
 void Client::_clearData(){
@@ -46,21 +58,23 @@ void Client::_clearData(){
 		free(_video.data);
 		_video.data = 0;
 	}
-	
+
 	if (_depth.data){
 		free(_depth.data);
 		_depth.data = 0;
 	}
-	
+
 	if (_video.frame){
 		delete _video.frame;
 		_video.frame = 0;
 	}
-	
+
 	if (_depth.frame){
 		delete _depth.frame;
 		_depth.frame = 0;
 	}
+
+	_processed = 0;
 }
 
 int Client::_handleFrameMessage(int len){
@@ -76,7 +90,7 @@ int Client::_handleFrameMessage(int len){
 			<< endl;
 		return -1;
 	}
-	
+
 	_clearData();
 
 	/* Create opencv matrix for video frame */
@@ -84,7 +98,7 @@ int Client::_handleFrameMessage(int len){
 	memcpy(_video.data, frame.fvideo_data().c_str(), frame.fvideo_size());
 
 	_video.frame = new Mat(Size(frame.fvideo_width(), frame.fvideo_height())
-					, frame.fvideo_depth(), _video.data);
+					, CV_8UC3, _video.data);
 	cvtColor(*_video.frame, *_video.frame, CV_RGB2BGR);
 
 
@@ -93,7 +107,7 @@ int Client::_handleFrameMessage(int len){
 	memcpy(_depth.data, &frame.fdepth_data(), frame.fdepth_size());
 
 	_depth.frame = new Mat(Size(frame.fdepth_width(), frame.fdepth_height())
-					, frame.fdepth_depth(), _depth.data);
+					, CV_16UC1, _depth.data);
 
 	free(buf);
 
@@ -123,4 +137,6 @@ void Client::_threadHandle(){
 			LOG_DEBUG << "Timestamp = " << timestamp << endl;
 		}
 	}
+
+	_running = 0;
 }

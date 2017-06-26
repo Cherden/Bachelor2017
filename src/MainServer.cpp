@@ -8,7 +8,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "../gen/KinectFrameMessage.pb.h"
 #include "Client.h"
 #include "Connection.h"
 #include "Logger.h"
@@ -38,19 +37,19 @@ void acceptClient(int* size){
 	struct sockaddr_in client_info = {};
 	int max = *size;
 	*size = 0;
-	
-	Connection con();
-	con.createConnection(SERVER, CONNECTION_PORT, NULL);
+
+	Connection con;
+	con.createConnection(SERVER, CONNECTION_PORT, "");
 
 	while(*size < max || running){
-		new_socket = con.acceptConnection(&client_info);
+		new_socket = con.acceptConnection(NULL);
 		if (new_socket >= 0){
 			clients[*size] = new Client(new_socket);
-			clients[*size]->setInfo(&client_info);
-			*size++;
+			//clients[*size]->setInfo(&client_info);
+			(*size)++;
 		}
 	}
-	
+
 	con.closeConnection();
 }
 
@@ -61,16 +60,40 @@ int main(void){
 
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, &amount_clients);
-	
+
 
 	while (running){
-		//process frames
+		for (int i = 0; i < amount_clients; i++){
+			if (clients[i] == NULL){
+				continue;
+			} else if (!clients[i]->isActive()){
+				delete clients[i];
+				clients[i] = NULL;
+				continue;
+			}
+
+			Mat x, y;
+			if (clients[i]->lockData() < 0){
+				//LOG_WARNING << "Client " << i << ": failed to lock data" << endl;
+				continue;
+			}
+
+			if (clients[i]->getData(&x, &y)){
+				LOG_WARNING << "Client " << i << ": failed to get data" << endl;
+			}
+
+			clients[i]->releaseData();
+
+			LOG_DEBUG << "Client " << i << ": processed data" << endl;
+		}
 	}
 
 	accept_clients.join();
-	
+
 	for (int i = 0; i < amount_clients; i++){
-		delete clients[i];
+		if (clients[i] != NULL){
+			delete clients[i];
+		}
 	}
 
 	return 0;

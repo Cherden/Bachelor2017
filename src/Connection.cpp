@@ -111,15 +111,13 @@ int Connection::acceptConnection(struct sockaddr_in* new_client){
 	int socket = 0;
 	socklen_t client_size = sizeof(struct sockaddr_in);
 
-	LOG_DEBUG << "waiting to accept new client on " << _socket << endl;
-
 	if ((socket = accept4(_socket, (struct sockaddr*) new_client
-			, &client_size), SOCK_NONBLOCK) < 0){				
+			, &client_size, SOCK_NONBLOCK)) < 0){
 		if (!(socket == EAGAIN || socket == EWOULDBLOCK)){
 			LOG_WARNING << "accepting new client failed, strerror : "
 			<< strerror(errno) << endl;
 		}
-		
+
 		return -1;
 	}
 

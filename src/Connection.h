@@ -10,7 +10,7 @@
 #define CONNECTION_PORT 79421
 
 /**
-	Amount of clients the server should wait to accept
+	Amount of clients the server can accept
 */
 #define MAX_CLIENTS 1
 
@@ -25,7 +25,7 @@ class Connection{
 public:
 	/**
 		Constructor to create new socket.
-		
+
 	*/
 	Connection();
 
@@ -86,10 +86,10 @@ public:
 		@return 1 if the socket is closed, 0 otherwise
 	*/
 	int isClosed();
-	
+
 	/**
 		Copies the info about the connection.
-		
+
 		@param info The struct, from which the connection will copy.
 	*/
 	void setInfo(struct sockaddr_in* info);
