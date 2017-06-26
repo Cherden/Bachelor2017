@@ -25,30 +25,19 @@ void Client::setInfo(struct sockaddr_in* info){
 	_con.setInfo(info);
 }
 
-int Client::lockData(){
+int Client::getData(Mat& video, Mat& depth){
 	if (_processed){
 		return -1;
 	}
 
 	_data_mutex.lock();
-	return 0;
-}
 
-void Client::releaseData(){
-	_data_mutex.unlock();
-}
-
-int Client::getData(Mat* video, Mat* depth){
-	if (_data_mutex.try_lock()){
-		_data_mutex.unlock();
-		LOG_WARNING << "tried to get client data with unlocked mutex" << endl;
-		return -1;
-	}
-
-	video = _video.frame;
-	depth = _depth.frame;
+	cvtColor(*_video.frame, video, CV_RGB2BGR);
+	_depth.frame->copyTo(depth);
 
 	_processed = 1;
+
+	_data_mutex.unlock();
 
 	return 0;
 }
@@ -99,15 +88,16 @@ int Client::_handleFrameMessage(int len){
 
 	_video.frame = new Mat(Size(frame.fvideo_width(), frame.fvideo_height())
 					, CV_8UC3, _video.data);
-	cvtColor(*_video.frame, *_video.frame, CV_RGB2BGR);
 
 
 	/* Create opencv matrix for depth frame */
 	_depth.data = (char*) malloc(frame.fdepth_size());
-	memcpy(_depth.data, &frame.fdepth_data(), frame.fdepth_size());
+	memcpy(_depth.data, frame.fdepth_data().c_str(), frame.fdepth_size());
 
 	_depth.frame = new Mat(Size(frame.fdepth_width(), frame.fdepth_height())
 					, CV_16UC1, _depth.data);
+
+	//_depth.frame->convertTo(*_depth.frame, CV_8UC1, 255.0/2048.0);
 
 	free(buf);
 

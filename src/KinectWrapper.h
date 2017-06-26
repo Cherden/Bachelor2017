@@ -25,7 +25,7 @@ typedef enum{
 #define DEPTH_FRAME_WIDTH 		640
 #define DEPTH_FRAME_HEIGHT 		480
 #define DEPTH_FRAME_DEPTH 		CV_16UC1
-#define DEPTH_FRAME_MAX_SIZE 	422400 	//640*480*1.375
+#define DEPTH_FRAME_MAX_SIZE 	VIDEO_FRAME_HEIGHT * VIDEO_FRAME_WIDTH * 2
 
 class KinectWrapper{
 public:

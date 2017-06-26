@@ -45,7 +45,7 @@ void acceptClient(int* size){
 		new_socket = con.acceptConnection(NULL);
 		if (new_socket >= 0){
 			clients[*size] = new Client(new_socket);
-			//clients[*size]->setInfo(&client_info);
+			clients[*size]->setInfo(&client_info);
 			(*size)++;
 		}
 	}
@@ -61,7 +61,8 @@ int main(void){
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, &amount_clients);
 
-
+	/*namedWindow("rgb", CV_WINDOW_AUTOSIZE );
+	namedWindow("depth", CV_WINDOW_AUTOSIZE );*/
 	while (running){
 		for (int i = 0; i < amount_clients; i++){
 			if (clients[i] == NULL){
@@ -72,17 +73,16 @@ int main(void){
 				continue;
 			}
 
-			Mat x, y;
-			if (clients[i]->lockData() < 0){
-				//LOG_WARNING << "Client " << i << ": failed to lock data" << endl;
-				continue;
-			}
+			Mat video(Size(640,480),CV_8UC3,Scalar(0));
+			Mat depth(Size(640,480),CV_16UC1);
 
-			if (clients[i]->getData(&x, &y)){
+			if (clients[i]->getData(video, depth)){
 				LOG_WARNING << "Client " << i << ": failed to get data" << endl;
 			}
 
-			clients[i]->releaseData();
+			/*imshow("rgb", video);
+			imshow("depth", depth);
+			cvWaitKey(10);*/
 
 			LOG_DEBUG << "Client " << i << ": processed data" << endl;
 		}

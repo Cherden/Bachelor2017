@@ -34,11 +34,8 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
-	char video_image[VIDEO_FRAME_MAX_SIZE] = {0};
-	char depth_image[DEPTH_FRAME_MAX_SIZE] = {0};
-
-	char* video_ptr = &video_image[0];
-	char* depth_ptr = &depth_image[0];
+	char* video_image;
+	char* depth_image;
 
   	KinectFrameMessage frame_message;
 
@@ -57,8 +54,8 @@ int main(void){
 		resync etc.), so just do it once before the "real" program starts
 	*/
 	LOG_DEBUG << "handle usb handshake..." << endl;
-	kinect.getData(VIDEO, &video_ptr);
-	kinect.getData(DEPTH, &depth_ptr);
+	kinect.getData(VIDEO, &video_image);
+	kinect.getData(DEPTH, &depth_image);
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	Connection con;
@@ -87,11 +84,11 @@ int main(void){
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		start_time = clock();
-		if ((ret = kinect.getData(VIDEO, &video_ptr)) != 0){
+		if ((ret = kinect.getData(VIDEO, &video_image)) != 0){
 			LOG_WARNING << "could not receive video frame from kinect" << endl;
 			continue;
 		}
-		if ((ret = kinect.getData(DEPTH, &depth_ptr)) != 0){
+		if ((ret = kinect.getData(DEPTH, &depth_image)) != 0){
 			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
@@ -99,9 +96,7 @@ int main(void){
 		diff_time = timestamp - start_time;
 
 
-		LOG_DEBUG << "test " << endl;
 		frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
-		LOG_DEBUG << "test2 " << endl;
 		frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 		frame_message.set_timestamp(timestamp);
 

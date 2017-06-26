@@ -130,8 +130,8 @@ int Connection::acceptConnection(struct sockaddr_in* new_client){
 void Connection::sendData(void* buffer, size_t buffer_size){
 	if (_socket){
 		if (send(_socket, buffer, buffer_size, MSG_NOSIGNAL) <= 0){
-			LOG_ERROR << "failed to send data, strerror : " << strerror(errno)
-				<< endl;
+			LOG_ERROR << "failed to send data (" << _socket << "), strerror : "
+			 	<< strerror(errno) << endl;
 
 			closeConnection();
 		} else {
@@ -188,8 +188,8 @@ void Connection::recvData(void* buffer, int buffer_size){
 
 		//if ((ret = _recvChunks(buffer, buffer_size)) < 0){
 		if ((ret = recv(_socket, buffer, buffer_size, MSG_WAITALL)) < 0){
-			LOG_ERROR << "failed to receive data, strerror : "
-				<< strerror(errno) << endl;
+			LOG_ERROR << "failed to receive data (" << _socket
+			 	<< "), strerror : " << strerror(errno) << endl;
 			closeConnection();
 		} else if (ret == 0) {
 			LOG_ERROR << "received 0 data, closing connection" << endl;

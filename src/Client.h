@@ -25,7 +25,7 @@ public:
 
 	int lockData();
 	void releaseData();
-	int getData(Mat* video, Mat* depth);
+	int getData(Mat& video, Mat& depth);
 
 	int isActive(){ return _running; };
 

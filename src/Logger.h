@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <time.h>
+#include <mutex>
 
 using namespace std;
 
@@ -42,7 +43,9 @@ public:
 		return logger;
 	}
 	ofstream& log(LogLevel l){
+		_file_mutex.lock();
 		_file << "[" << getLogLevelString(l) << "] " << clock() << " : ";
+		_file_mutex.unlock();
 		return _file;
 	}
 	void setLogLevel(LogLevel l){
@@ -73,6 +76,7 @@ private:
 private:
 	LogLevel _level;
 	ofstream _file;
+	mutex _file_mutex;
 
 };
 
