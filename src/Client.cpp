@@ -128,5 +128,5 @@ void Client::_threadHandle(){
 		}
 	}
 
-	_running = 0;
+	LOG_DEBUG << "leaving _threadHandle" << endl;
 }

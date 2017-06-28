@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-#include <google/protobuf/arena.h>
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
 #include "Connection.h"
@@ -66,7 +65,7 @@ int main(void){
 	clock_t diff_time = 0;
 	clock_t diff_time_total = 0;
 
-	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
+	/*frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
 	frame_message.set_fvideo_height(VIDEO_FRAME_HEIGHT);
 	frame_message.set_fvideo_width(VIDEO_FRAME_WIDTH);
 	frame_message.set_fvideo_depth(VIDEO_FRAME_DEPTH);
@@ -74,7 +73,7 @@ int main(void){
 	frame_message.set_fdepth_size(DEPTH_FRAME_MAX_SIZE);
 	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
-	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
+	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);*/
 
 	while(running){
 		if (con.isClosed()){
@@ -95,20 +94,29 @@ int main(void){
 		timestamp = clock();
 		diff_time = timestamp - start_time;
 
-
+		LOG_DEBUG << "seg 1" << endl;
 		frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		LOG_DEBUG << "seg 2" << endl;
 		frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
+		LOG_DEBUG << "seg 3" << endl;
 		frame_message.set_timestamp(timestamp);
 
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
+
+		LOG_DEBUG << "seg 4" << endl;
 		send_data = malloc(size);
+		LOG_DEBUG << "seg 5" << endl;
 		frame_message.SerializeToArray(send_data, size);
 
+		LOG_DEBUG << "seg 6" << endl;
 		uint32_t size_nw = htonl(size);
+		LOG_DEBUG << "seg 7" << endl;
 		con.sendData((void*) &size_nw, 4);
+		LOG_DEBUG << "seg 8" << endl;
 		con.sendData(send_data, size);
+		LOG_DEBUG << "seg 9" << endl;
 
 		free(send_data);
 

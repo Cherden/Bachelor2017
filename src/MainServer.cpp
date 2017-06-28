@@ -41,15 +41,16 @@ void acceptClient(int* size){
 	Connection con;
 	con.createConnection(SERVER, CONNECTION_PORT, "");
 
-	while(*size < max || running){
+	while (running || *size < max){
 		new_socket = con.acceptConnection(NULL);
 		if (new_socket >= 0){
 			clients[*size] = new Client(new_socket);
-			clients[*size]->setInfo(&client_info);
+			//clients[*size]->setInfo(&client_info);
 			(*size)++;
 		}
 	}
 
+	LOG_DEBUG << "accepted all clients" << endl;
 	con.closeConnection();
 }
 

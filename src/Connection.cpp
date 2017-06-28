@@ -18,10 +18,13 @@ Connection::Connection()
 Connection::Connection(int socket)
 	: _socket(socket)
 	, _type(CLIENT)
-	, _info({}) {}
+	, _info({}) {
+		LOG_DEBUG << "created connection object with socket " << socket << endl;
+	}
 
 Connection::~Connection(){
 	if (_socket){
+		LOG_WARNING << "connection instance died without closing first" << endl;
 		close(_socket);
 	}
 }
@@ -167,7 +170,7 @@ void Connection::sendData(void* buffer, size_t buffer_size){
 }*/
 
 void Connection::recvData(void* buffer, int buffer_size){
-	int ret = 0;
+	int ret = EAGAIN;
 
 	if (_socket){
 		/*
@@ -186,10 +189,14 @@ void Connection::recvData(void* buffer, int buffer_size){
 		if (ret < 0){
 		*/
 
-		//if ((ret = _recvChunks(buffer, buffer_size)) < 0){
-		if ((ret = recv(_socket, buffer, buffer_size, MSG_WAITALL)) < 0){
+		while (ret == EAGAIN){
+			//ret = _recvChunks(buffer, buffer_size);
+			ret = recv(_socket, buffer, buffer_size, MSG_WAITALL);
+		}
+
+		if (ret < 0){
 			LOG_ERROR << "failed to receive data (" << _socket
-			 	<< "), strerror : " << strerror(errno) << endl;
+				<< "), strerror : " << strerror(errno) << endl;
 			closeConnection();
 		} else if (ret == 0) {
 			LOG_ERROR << "received 0 data, closing connection" << endl;
@@ -198,6 +205,8 @@ void Connection::recvData(void* buffer, int buffer_size){
 			LOG_DEBUG <<"received " << ret << " bytes over socket " << _socket
 				<< endl;
 		}
+
+
 	} else {
 		LOG_ERROR << "failed to receive data because the socket closed" << endl;
 	}
@@ -228,8 +237,8 @@ void Connection::setInfo(struct sockaddr_in* info){
 }
 
 void Connection::closeConnection(){
-	LOG_DEBUG << "closing socket " << _socket << endl;
 	if (_socket){
+		LOG_DEBUG << "closing socket " << _socket << endl;
 		close(_socket);
 		_socket = 0;
 	}
