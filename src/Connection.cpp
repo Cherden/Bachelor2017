@@ -1,5 +1,6 @@
 #include "Connection.h"
 
+#include <fcntl.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <errno.h>
@@ -114,9 +115,9 @@ int Connection::acceptConnection(struct sockaddr_in* new_client){
 	int socket = 0;
 	socklen_t client_size = sizeof(struct sockaddr_in);
 
-	if ((socket = accept4(_socket, (struct sockaddr*) new_client
-			, &client_size, SOCK_NONBLOCK)) < 0){
-		if (!(socket == EAGAIN || socket == EWOULDBLOCK)){
+	if ((socket = accept(_socket, (struct sockaddr*) new_client
+			, &client_size)) < 0){
+		if (!(errno == EAGAIN || errno == EWOULDBLOCK)){
 			LOG_WARNING << "accepting new client failed, strerror : "
 			<< strerror(errno) << endl;
 		}
@@ -170,31 +171,11 @@ void Connection::sendData(void* buffer, size_t buffer_size){
 }*/
 
 void Connection::recvData(void* buffer, int buffer_size){
-	int ret = EAGAIN;
+	int ret = 0;
 
 	if (_socket){
-		/*
-		int recv_buff_size = 0;
-		size_t recv_buff_size_size = sizeof(recv_buff_size);
-
-		getsockopt(_socket, SOL_SOCKET, SO_RCVBUF, (void *)&recv_buff_size
-			, &recv_buff_size_size);
-
-		if (recv_buff_size < buffer_size) {
-			ret = _recvChunks(buffer, buffer_size);
-		} else {
-			ret = recv(_socket, buffer, buffer_size, 0);
-		}
-
-		if (ret < 0){
-		*/
-
-		while (ret == EAGAIN){
-			//ret = _recvChunks(buffer, buffer_size);
-			ret = recv(_socket, buffer, buffer_size, MSG_WAITALL);
-		}
-
-		if (ret < 0){
+		if ((ret = recv(_socket, buffer, buffer_size, MSG_WAITALL)) < 0){
+			//ret = _recvChunks(buffer, buffer_size)
 			LOG_ERROR << "failed to receive data (" << _socket
 				<< "), strerror : " << strerror(errno) << endl;
 			closeConnection();
@@ -230,6 +211,10 @@ int Connection::_recvChunks(void* buffer, int buffer_size){
 	}
 
 	return recevied_bytes;
+}
+
+void Connection::setNonBlocking(){
+	fcntl(_socket, F_SETFL, fcntl(_socket, F_GETFL, 0) | O_NONBLOCK);
 }
 
 void Connection::setInfo(struct sockaddr_in* info){

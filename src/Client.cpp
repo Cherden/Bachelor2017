@@ -9,7 +9,7 @@ Client::Client(int socket)
 	: _con(socket)
 	, _video({})
 	, _depth({})
-	, _processed(0)
+	, _data_available(0)
 	, _running(1)
 	, _data_mutex()
 	, _client_thread(&Client::_threadHandle, this) {}
@@ -26,7 +26,7 @@ void Client::setInfo(struct sockaddr_in* info){
 }
 
 int Client::getData(Mat& video, Mat& depth){
-	if (_processed){
+	if (!_data_available){
 		return -1;
 	}
 
@@ -35,7 +35,7 @@ int Client::getData(Mat& video, Mat& depth){
 	cvtColor(*_video.frame, video, CV_RGB2BGR);
 	_depth.frame->copyTo(depth);
 
-	_processed = 1;
+	_data_available = 0;
 
 	_data_mutex.unlock();
 
@@ -62,8 +62,6 @@ void Client::_clearData(){
 		delete _depth.frame;
 		_depth.frame = 0;
 	}
-
-	_processed = 0;
 }
 
 int Client::_handleFrameMessage(int len){
@@ -73,8 +71,8 @@ int Client::_handleFrameMessage(int len){
 	_con.recvData((void *) buf, len);
 	frame.ParseFromArray(buf, len);
 
-	if (!(frame.fvideo_data() == "" || frame.fdepth_data() == ""
-		|| frame.timestamp() == 0)){
+	if (frame.fvideo_data() == "" || frame.fdepth_data() == ""
+		|| frame.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
 			<< endl;
 		return -1;
@@ -100,6 +98,8 @@ int Client::_handleFrameMessage(int len){
 	//_depth.frame->convertTo(*_depth.frame, CV_8UC1, 255.0/2048.0);
 
 	free(buf);
+
+	_data_available = 1;
 
 	return frame.timestamp();
 }

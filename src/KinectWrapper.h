@@ -16,8 +16,7 @@ typedef enum{
 #define VIDEO_FRAME_WIDTH 		640
 #define VIDEO_FRAME_HEIGHT 		480
 #define VIDEO_FRAME_DEPTH 		CV_8UC3
-#define VIDEO_FRAME_MAX_SIZE 	VIDEO_FRAME_HEIGHT * VIDEO_FRAME_WIDTH \
-								* VIDEO_FRAME_DEPTH
+#define VIDEO_FRAME_MAX_SIZE 	VIDEO_FRAME_HEIGHT * VIDEO_FRAME_WIDTH * 3
 
 /**
 	The size of data for one depth frame

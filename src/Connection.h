@@ -12,7 +12,7 @@
 /**
 	Amount of clients the server can accept
 */
-#define MAX_CLIENTS 1
+#define MAX_CLIENTS 2
 
 
 typedef enum{
@@ -86,6 +86,11 @@ public:
 		@return 1 if the socket is closed, 0 otherwise
 	*/
 	int isClosed();
+
+	/**
+		Marks the socket as non-blocking.
+	*/
+	void setNonBlocking();
 
 	/**
 		Copies the info about the connection.

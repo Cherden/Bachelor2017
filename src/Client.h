@@ -41,7 +41,7 @@ private:
 
 	ClientData _video;
 	ClientData _depth;
-	volatile int _processed;
+	volatile int _data_available;
 
 	volatile int _running;
 	mutex _data_mutex;

@@ -40,13 +40,16 @@ void acceptClient(int* size){
 
 	Connection con;
 	con.createConnection(SERVER, CONNECTION_PORT, "");
+	con.setNonBlocking();
 
-	while (running || *size < max){
-		new_socket = con.acceptConnection(NULL);
-		if (new_socket >= 0){
-			clients[*size] = new Client(new_socket);
-			//clients[*size]->setInfo(&client_info);
-			(*size)++;
+	while (running){
+		if (*size < max){
+			new_socket = con.acceptConnection(&client_info);
+			if (new_socket >= 0){
+				clients[*size] = new Client(new_socket);
+				clients[*size]->setInfo(&client_info);
+				(*size)++;
+			}
 		}
 	}
 
@@ -62,8 +65,6 @@ int main(void){
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, &amount_clients);
 
-	/*namedWindow("rgb", CV_WINDOW_AUTOSIZE );
-	namedWindow("depth", CV_WINDOW_AUTOSIZE );*/
 	while (running){
 		for (int i = 0; i < amount_clients; i++){
 			if (clients[i] == NULL){
@@ -78,14 +79,12 @@ int main(void){
 			Mat depth(Size(640,480),CV_16UC1);
 
 			if (clients[i]->getData(video, depth)){
-				LOG_WARNING << "Client " << i << ": failed to get data" << endl;
+				continue;
 			}
 
-			/*imshow("rgb", video);
+			imshow("rgb", video);
 			imshow("depth", depth);
-			cvWaitKey(10);*/
-
-			LOG_DEBUG << "Client " << i << ": processed data" << endl;
+			cvWaitKey(10);
 		}
 	}
 
