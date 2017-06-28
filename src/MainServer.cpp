@@ -70,6 +70,7 @@ int main(void){
 			if (clients[i] == NULL){
 				continue;
 			} else if (!clients[i]->isActive()){
+				cout << "kill client" << endl;
 				delete clients[i];
 				clients[i] = NULL;
 				continue;
@@ -82,9 +83,9 @@ int main(void){
 				continue;
 			}
 
-			imshow("rgb", video);
-			imshow("depth", depth);
-			cvWaitKey(10);
+			imshow("rgb " + to_string(i), video);
+			imshow("depth " + to_string(i), depth);
+			cvWaitKey(1);
 		}
 	}
 
