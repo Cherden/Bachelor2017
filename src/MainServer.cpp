@@ -65,6 +65,9 @@ int main(void){
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, &amount_clients);
 
+	clock_t for_fps = clock();
+	int frames = 0;
+
 	while (running){
 		for (int i = 0; i < amount_clients; i++){
 			if (clients[i] == NULL){
@@ -83,9 +86,17 @@ int main(void){
 				continue;
 			}
 
-			imshow("rgb " + to_string(i), video);
-			imshow("depth " + to_string(i), depth);
-			cvWaitKey(1);
+			frames++;
+
+			if (clock() - for_fps >= CLOCKS_PER_SEC){
+				cout << "time: " << clock() << ", " << frames << " FPS" << endl;
+				for_fps = clock();
+				frames = 0;
+			}
+
+			//imshow("rgb " + to_string(i), video);
+			//imshow("depth " + to_string(i), depth);
+			//cvWaitKey(1);
 		}
 	}
 

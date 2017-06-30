@@ -75,6 +75,8 @@ int main(void){
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
 	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
 
+	clock_t for_fps = clock();
+	int frames = 0;
 	while(running){
 		if (con.isClosed()){
 			break;
@@ -118,6 +120,14 @@ int main(void){
 			<< (double) (diff_time) / 1000 << "ms, "
 			<< (double) (diff_time_total) / 1000
 			<< "ms total" << endl;
+
+
+		frames++;
+		if (clock() - for_fps >= CLOCKS_PER_SEC){
+			cout << frames << " FPS" << endl;
+			for_fps = clock();
+			frames = 0;
+		}
 
 		clock_t wait_time = clock() + 33333 - diff_time_total;
 		//while (wait_time - clock()  > 0){}
