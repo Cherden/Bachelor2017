@@ -95,7 +95,7 @@ int Client::_handleFrameMessage(int len){
 	_depth.frame = new Mat(Size(frame.fdepth_width(), frame.fdepth_height())
 					, CV_16UC1, _depth.data);
 
-	//_depth.frame->convertTo(*_depth.frame, CV_8UC1, 255.0/2048.0);
+	_depth.frame->convertTo(*_depth.frame, CV_8UC1, 255.0/2048.0);
 
 	free(buf);
 

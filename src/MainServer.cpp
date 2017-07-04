@@ -1,4 +1,6 @@
 #include <iostream>
+#include <ratio>
+#include <chrono>
 #include <thread>
 #include <time.h>
 #include <stdint.h>
@@ -18,6 +20,7 @@
 
 using namespace std;
 using namespace cv;
+using namespace chrono;
 
 volatile bool running = true;
 void signalHandler(int signal)
@@ -65,9 +68,11 @@ int main(void){
 	int amount_clients = MAX_CLIENTS;
 	thread accept_clients(acceptClient, &amount_clients);
 
-	clock_t for_fps = clock();
+	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
+	duration<double, std::milli> diff_time;
 	int frames = 0;
 
+	int got_one = 0;
 	while (running){
 		for (int i = 0; i < amount_clients; i++){
 			if (clients[i] == NULL){
@@ -86,17 +91,23 @@ int main(void){
 				continue;
 			}
 
-			frames++;
 
-			if (clock() - for_fps >= CLOCKS_PER_SEC){
-				cout << "time: " << clock() << ", " << frames << " FPS" << endl;
-				for_fps = clock();
-				frames = 0;
-			}
-
+			got_one = 1;
 			//imshow("rgb " + to_string(i), video);
 			//imshow("depth " + to_string(i), depth);
 			//cvWaitKey(1);
+		}
+
+		if (got_one){
+			frames++;
+			diff_time = high_resolution_clock::now() - for_fps;
+			if (diff_time.count() >= 1000){
+				cout << frames << " FPS" << endl;
+				for_fps = high_resolution_clock::now();
+				frames = 0;
+			}
+
+			got_one = 0;
 		}
 	}
 
