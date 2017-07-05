@@ -4,28 +4,19 @@
 #include <arpa/inet.h>
 #include <thread>
 #include <mutex>
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
 #include "Connection.h"
+#include "../gen/KinectFrameMessage.pb.h"
 
 using namespace std;
-using namespace cv;
 
-typedef struct{
-	Mat* frame;
-	char* data;
-} ClientData;
 
 class Client{
 public:
 	Client(int socket);
 
 	void setInfo(struct sockaddr_in* info);
-
-	int lockData();
-	void releaseData();
-	int getData(Mat& video, Mat& depth);
+	int getData(char** video, char** depth);
 
 	int isActive(){ return _running; };
 
@@ -34,13 +25,11 @@ public:
 
 private:
 	void _threadHandle();
-	int _handleFrameMessage(int len);
-	void _clearData();
+	void _handleFrameMessage(int len);
 
 	Connection _con;
 
-	ClientData _video;
-	ClientData _depth;
+	KinectFrameMessage _sensor_data;
 	volatile int _data_available;
 
 	volatile int _running;

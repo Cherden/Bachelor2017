@@ -30,7 +30,7 @@ void signalHandler(int signal){
 
 int main(void){
 	if (getuid()){
-		LOG_ERROR << "you have to have root permission" << endl;
+		cout << "You have to have root permission! Try sudo." << endl;
 		return -1;
 	}
 
@@ -56,16 +56,39 @@ int main(void){
 		resync etc.), so just do it once before the "real" program starts
 	*/
 	LOG_DEBUG << "handle usb handshake..." << endl;
+	cout << "Initialize Kincet.." << endl;
 	kinect.getData(VIDEO, &video_image);
 	kinect.getData(DEPTH, &depth_image);
 
 	LOG_DEBUG << "try to create connection..." << endl;
+	cout << "Connect to server.." << endl;
 	Connection con;
 	con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2");
 
 	high_resolution_clock::time_point start_time;
 	high_resolution_clock::time_point end_time;
 	time_t timestamp;
+
+	double tget_data = 0;
+	double tget_data_min = 2147483647;
+	double tget_data_max = 0;
+	double tget_data_avg = 0;
+
+
+	double tset_data = 0;
+	double tset_data_min = 2147483647;
+	double tset_data_max = 0;
+	double tset_data_avg = 0;
+
+	double tserialize_data = 0;
+	double tserialize_data_min = 2147483647;
+	double tserialize_data_max = 0;
+	double tserialize_data_avg = 0;
+
+	double tsend_data = 0;
+	double tsend_data_min = 2147483647;
+	double tsend_data_max = 0;
+	double tsend_data_avg = 0;
 
 	duration<double, std::milli> diff_time;
 
@@ -82,6 +105,8 @@ int main(void){
 
 	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
 	int frames = 0;
+
+	cout << "Sending data to server.." << endl;
 	while(running){
 		if (con.isClosed()){
 			break;
@@ -103,7 +128,11 @@ int main(void){
 
 		timestamp = system_clock::to_time_t(end_time);
 
-		LOG_DEBUG << "time to capture sensor data: " << diff_time.count()
+		tget_data = diff_time.count();
+		tget_data_min = tget_data < tget_data_min ? tget_data : tget_data_min;
+		tget_data_max = tget_data > tget_data_max ? tget_data : tget_data_max;
+		tget_data_avg = (tget_data_avg + tget_data) / 2;
+		LOG_DEBUG << "time to capture sensor data: " << tget_data
 			<< " ms" << endl;
 
 		start_time = high_resolution_clock::now();
@@ -113,8 +142,12 @@ int main(void){
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
-		LOG_DEBUG << "time to put data in protobuf message: "
-			<< diff_time.count() << " ms" << endl;
+		tset_data = diff_time.count();
+		tset_data_min = tset_data < tset_data_min ? tset_data : tset_data_min;
+		tset_data_max = tset_data > tset_data_max ? tset_data : tset_data_max;
+		tset_data_avg = (tset_data_avg + tset_data) / 2;
+		LOG_DEBUG << "time to put data in protobuf message: " << tset_data
+			<< " ms" << endl;
 
 		start_time = high_resolution_clock::now();
 		uint32_t size = frame_message.ByteSize();
@@ -125,9 +158,14 @@ int main(void){
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
-
+		tserialize_data = diff_time.count();
+		tserialize_data_min = tserialize_data < tserialize_data_min
+			? tserialize_data : tserialize_data_min;
+		tserialize_data_max = tserialize_data > tserialize_data_max
+			? tserialize_data : tserialize_data_max;
+		tserialize_data_avg = (tserialize_data_avg + tserialize_data) / 2;
 		LOG_DEBUG << "time to serialize protobuf message: "
-			<< diff_time.count() << " ms" << endl;
+			<< tserialize_data << " ms" << endl;
 
 		start_time = high_resolution_clock::now();
 		uint32_t size_nw = htonl(size);
@@ -138,14 +176,41 @@ int main(void){
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
-		LOG_DEBUG << "time to send protobuf message: "
-			<< diff_time.count() << " ms" << endl;
-
+		tsend_data = diff_time.count();
+		tsend_data_min = tsend_data < tsend_data_min ? tsend_data : tsend_data_min;
+		tsend_data_max = tsend_data > tsend_data_max ? tsend_data : tsend_data_max;
+		tsend_data_avg = (tsend_data_avg + tsend_data) / 2;
+		LOG_DEBUG << "time to send protobuf message: "	<< tsend_data
+			<< " ms" << endl;
 
 		frames++;
 		diff_time = high_resolution_clock::now() - for_fps;
 		if (diff_time.count() >= 1000){
-			cout << frames << " FPS" << endl;
+			//printf("\033[1K")
+		//	printf("\033[H");
+			cout << "\x1B[2J\x1B[H"
+				<< "Time to capture sensor data: \n"
+					<< "\tACT = " << tget_data
+					<< "\tMIN = " << tget_data_min
+					<< "\tMAX = " << tget_data_max
+					<< "\tAVG = " << tget_data_avg
+				<< "\nTime to put data in protobuf message: \n"
+					<< "\tACT = " << tset_data
+					<< "\tMIN = " << tset_data_min
+					<< "\tMAX = " << tset_data_max
+					<< "\tAVG = " << tset_data_avg
+				<< "\nTime to serialize protobuf message: \n"
+					<< "\tACT = " << tserialize_data
+					<< "\tMIN = " << tserialize_data_min
+					<< "\tMAX = " << tserialize_data_max
+					<< "\tAVG = " << tserialize_data_avg
+				<< "\nTime to send protobuf message: \n"
+					<< "\tACT = " << tsend_data
+					<< "\tMIN = " << tsend_data_min
+					<< "\tMAX = " << tsend_data_max
+					<< "\tAVG = " << tsend_data_avg
+				<< "\nRunning at " << frames << " FPS"
+				<< flush;
 			for_fps = high_resolution_clock::now();
 			frames = 0;
 		}
