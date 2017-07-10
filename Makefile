@@ -3,7 +3,7 @@ PROTO_CC 		= 	protoc
 CXX_VERSION 	= 	-std=c++11
 CFLAGS 			= 	-Wall -c -g
 LFLAGS 			= 	-Wall -g -L/usr/local/lib/
-LIBS 			= 	-lfreenect -lfreenect_sync -lprotobuf `pkg-config --libs --cflags opencv`
+LIBS			=	-lprotobuf `pkg-config --libs --cflags opencv` -lfreenect -lfreenect_sync -lpthread
 
 
 OBJ_DIR 		=	obj
@@ -13,7 +13,7 @@ PROTO_DIR 		= 	gen
 PROTO_OBJS		= 	$(patsubst $(PROTO_DIR)/%.proto, $(OBJ_DIR)/%.pb.o, $(wildcard $(PROTO_DIR)/*.proto))
 
 OBJ 			=	Connection.o KinectWrapper.o
-OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o $(OBJ))
+OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o Client.o $(OBJ))
 OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ))
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))
 OBJ_TEST_SERVER = 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestServer.o $(OBJ))
@@ -40,7 +40,7 @@ proto : $(PROTO_OBJS)
 
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp
-	$(CXX) $(CFLAGS) $< -o $@
+	$(CXX) $(CXX_VERSION) $(CFLAGS) $< -o $@
 
 $(PROTO_DIR)/%.pb.h $(PROTO_DIR)/%.pb.cc : $(PROTO_DIR)/%.proto
 	$(PROTO_CC) -I./$(PROTO_DIR) --cpp_out=$(PROTO_DIR) $<

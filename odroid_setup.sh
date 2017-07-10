@@ -28,5 +28,15 @@ sudo systemctl disable plymouth.service --force
 
 #TODO install libfreenect, protobuf
 
+#protobuf
+./autogen.sh
+./configure
+make -j4
+sudo make install
+sudo ldconfig
+
+#libfreenect
+
+
 #restart
 sudo reboot

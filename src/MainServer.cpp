@@ -1,13 +1,14 @@
 #include <iostream>
+#include <ratio>
+#include <chrono>
+#include <thread>
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui.hpp>
 
-#include "../gen/KinectFrameMessage.pb.h"
+#include "Client.h"
 #include "Connection.h"
 #include "Logger.h"
 
@@ -16,7 +17,7 @@
 
 
 using namespace std;
-using namespace cv;
+using namespace chrono;
 
 volatile bool running = true;
 void signalHandler(int signal)
@@ -29,26 +30,40 @@ void signalHandler(int signal)
 	}
 }
 
-Mat* video_frame;
-char* video_data;
-Mat* depth_frame;
-char* depth_data;
+Client* clients[MAX_CLIENTS] = {0};
 
-int handleFrameMessage(Connection& con, int len){
-	KinectFrameMessage frame;
-	char* buf = (char*) malloc(len);
+void acceptClient(int* amount_clients){
+	int new_socket = 0;
+	struct sockaddr_in client_info = {};
 
-	con.recvData((void *) buf, len);
-	frame.ParseFromArray(buf, len);
+	Connection con;
+	con.createConnection(SERVER, CONNECTION_PORT, "");
+	con.setNonBlocking();
 
 	/*
-	if (!(frame.video_data() == "" || frame.depth_data() == ""
-	 	|| frame.timestamp() == 0)){
-		LOG_ERROR << "message does not contain at least one required field" << endl;
-		return -1;
-	}
+		At the moment it tries to accept three clients and die. Should keep
+		running to accept clients again after they died.
 	*/
+	while (running){
+		if (*amount_clients < MAX_CLIENTS){
+			new_socket = con.acceptConnection(&client_info);
+			if (new_socket >= 0){
+				int pos = 0;
 
+				for (; pos < MAX_CLIENTS; pos++){
+					if (clients[pos] == NULL){
+						break;
+					}
+				}
+
+				cout << '\r' << "Accepted client " << pos << ".." << endl;
+				clients[pos] = new Client(new_socket);
+				clients[pos]->setInfo(&client_info);
+				(*amount_clients)++;
+			}
+		}
+
+<<<<<<< HEAD
 	/* Create opencv matrix for video frame */
 	video_data = (char*) malloc(VIDEO_FRAME_MAX_SIZE);
 	memcpy(video_data, frame.video_data().c_str(), VIDEO_FRAME_MAX_SIZE);
@@ -65,48 +80,61 @@ int handleFrameMessage(Connection& con, int len){
 	depth_frame->convertTo(*depth_frame, CV_8UC1, 255.0/2048.0);
 
 	free(buf);
+=======
+		usleep(50000); //sleep for 0.5s to give main thread time
+	}
+>>>>>>> dev2
 
-	return frame.timestamp();
+	con.closeConnection();
 }
 
 int main(void){
-	int client_socket = 0;
-	int timestamp = 0;
-	//Connection clients[MAX_CLIENTS] = {0};
-
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
 	signal(SIGQUIT, signalHandler);
 
-	Connection con(CONNECTION_PORT, "127.0.0.1");
-	con.createConnection(SERVER);
+	cout << "Start accepting thread.." << endl;
 
-	client_socket = con.acceptConnection(NULL);
-	Connection client(client_socket);
+	int amount_clients = 0;
+	thread accept_clients(acceptClient, &amount_clients);
 
-	/*
-	for (int i = 0; i < MAX_CLIENTS; i++){
-		con.acceptConnection(&client_socket);
-		client[i] = Connection(client_socket);
-	}
-	*/
+	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
+	duration<double, std::milli> diff_time;
+	int frames[MAX_CLIENTS] = {0};
 
-	uint64_t size = 0;
 
+<<<<<<< HEAD
 	namedWindow("rgb", CV_WINDOW_AUTOSIZE );
 	namedWindow("depth", CV_WINDOW_AUTOSIZE );
 	while(running){
 		if (client.isClosed()){
 			break;
 		}
+=======
+	cout << "Waiting for clients.." << endl;
+	while (running){
+		for (int i = 0; i < MAX_CLIENTS; i++){
+			if (clients[i] == NULL){
+				continue;
+			} else if (!clients[i]->isActive()){
+				cout << "\rClient " << i << " disconnected.." << endl;
+				delete clients[i];
+				clients[i] = NULL;
+				amount_clients--;
+				continue;
+			}
+>>>>>>> dev2
 
-		client.recvData((void*) &size, 4);
-		size = ntohl(size);
+			char* video;
+			char* depth;
 
-		LOG_DEBUG << "next protobuf message size is " << size << endl;
+			if (clients[i]->getData(&video, &depth)){
+				continue;
+			}
 
-		timestamp = handleFrameMessage(client, size);
+			//do stuff
 
+<<<<<<< HEAD
 		if (timestamp < 0) {
 			LOG_DEBUG << "not showing frame" << endl;
 		} else {
@@ -115,18 +143,50 @@ int main(void){
 			imshow("rgb", *video_frame);
 			imshow("depth", *depth_frame);
 			cvWaitKey(10);
+=======
+			free(video);
+			free(depth);
+>>>>>>> dev2
 
-			LOG_DEBUG << "Timestamp = " << timestamp << endl;
+			frames[i]++;
+		}
 
+<<<<<<< HEAD
 			free(video_data);
 			delete video_frame;
 			free(depth_data);
 			delete depth_frame;
+=======
+		diff_time = high_resolution_clock::now() - for_fps;
+		if (diff_time.count() >= 1000){
+			int counted_clients = 0;
+			int sum = 0;
+
+			for(int i = 0; i < MAX_CLIENTS; i++){
+				if (clients[i] != NULL && clients[i]->isActive()){
+					counted_clients++;
+					sum += frames[i];
+				}
+				frames[i] = 0;
+			}
+
+			if (counted_clients > 0){
+				cout << "\rRunning at " << sum/counted_clients << " FPS"
+					<< flush;
+			}
+
+			for_fps = high_resolution_clock::now();
+>>>>>>> dev2
 		}
 	}
 
-	con.closeConnection();
-	client.closeConnection();
+	accept_clients.join();
+
+	for (int i = 0; i < MAX_CLIENTS; i++){
+		if (clients[i] != NULL){
+			delete clients[i];
+		}
+	}
 
 	return 0;
 }

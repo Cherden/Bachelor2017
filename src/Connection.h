@@ -4,17 +4,15 @@
 #include <string>
 #include <arpa/inet.h>
 
-#include "KinectWrapper.h"
-
 /**
 	Port used for communication from this program
 */
 #define CONNECTION_PORT 79421
 
 /**
-	Amount of clients the server should wait to accept
+	Amount of clients the server can accept
 */
-#define MAX_CLIENTS 1
+#define MAX_CLIENTS 2
 
 
 typedef enum{
@@ -23,21 +21,13 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
-typedef struct{
-	int header;
-	int size;
-} SerializationHeader;
-
 class Connection{
 public:
 	/**
 		Constructor to create new socket.
 
-		@param port The port this connection should use.
-		@param ip_address IPv4 address where the instance should connect itself
-		to.
 	*/
-	Connection(int port, std::string ip_address);
+	Connection();
 
 	/**
 		Constructor to create instance of getting a socket from accept().
@@ -51,9 +41,12 @@ public:
 		bind()failure it logs the errno output string.
 
 		@param type Whether to handle this instance as a server or client.
+		@param port The port this connection should use.
+		@param ip_address IPv4 address where the instance should connect itself
+		to. Can be NULL for type == SERVER.
 		@return 0 on success, -1 otherwise.
 	*/
-	int createConnection(ConnectionType type);
+	int createConnection(ConnectionType type, int port, std::string ip_address);
 
 	/**
 		Accept one new client from the listening socket. On accept() failure it
@@ -95,6 +88,18 @@ public:
 	int isClosed();
 
 	/**
+		Marks the socket as non-blocking.
+	*/
+	void setNonBlocking();
+
+	/**
+		Copies the info about the connection.
+
+		@param info The struct, from which the connection will copy.
+	*/
+	void setInfo(struct sockaddr_in* info);
+
+	/**
 		Close the socket. The instance will not be deleted, so be carefull
 		calling other functions with a closed socket.
 	*/
@@ -113,10 +118,10 @@ private:
 	*/
 	int _recvChunks(void* buffer, int buffer_size);
 
-	int _port;					//The port to connect with.
-	std::string _ip_address;	//The IPv4 address to connect to.
 	int _socket;				//The socket of the connection.
 	ConnectionType _type;		//The type of connection (SERVER or CLIENT).
+	struct sockaddr_in _info;	//Contains information about the other part of
+								//the connection.
 
 };
 
