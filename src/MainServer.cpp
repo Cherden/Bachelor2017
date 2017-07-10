@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
 
 #include "Client.h"
 #include "Connection.h"
@@ -19,7 +17,6 @@
 
 
 using namespace std;
-//using namespace cv;
 using namespace chrono;
 
 volatile bool running = true;
@@ -35,11 +32,9 @@ void signalHandler(int signal)
 
 Client* clients[MAX_CLIENTS] = {0};
 
-void acceptClient(int* size){
+void acceptClient(int* amount_clients){
 	int new_socket = 0;
 	struct sockaddr_in client_info = {};
-	int max = *size;
-	*size = 0;
 
 	Connection con;
 	con.createConnection(SERVER, CONNECTION_PORT, "");
@@ -50,17 +45,25 @@ void acceptClient(int* size){
 		running to accept clients again after they died.
 	*/
 	while (running){
-		if (*size < max){
+		if (*amount_clients < MAX_CLIENTS){
 			new_socket = con.acceptConnection(&client_info);
 			if (new_socket >= 0){
-				cout << '\r' << "Accepted client " << *size << ".." << endl;
-				clients[*size] = new Client(new_socket);
-				clients[*size]->setInfo(&client_info);
-				(*size)++;
+				int pos = 0;
+
+				for (; pos < MAX_CLIENTS; pos++){
+					if (clients[pos] == NULL){
+						break;
+					}
+				}
+
+				cout << '\r' << "Accepted client " << pos << ".." << endl;
+				clients[pos] = new Client(new_socket);
+				clients[pos]->setInfo(&client_info);
+				(*amount_clients)++;
 			}
 		}
 
-		usleep(50000); //sleep for 50000 to give enough ersources to main thread
+		usleep(50000); //sleep for 0.5s to give main thread time
 	}
 
 	con.closeConnection();
@@ -73,7 +76,7 @@ int main(void){
 
 	cout << "Start accepting thread.." << endl;
 
-	int amount_clients = MAX_CLIENTS;
+	int amount_clients = 0;
 	thread accept_clients(acceptClient, &amount_clients);
 
 	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
@@ -83,13 +86,14 @@ int main(void){
 
 	cout << "Waiting for clients.." << endl;
 	while (running){
-		for (int i = 0; i < amount_clients; i++){
+		for (int i = 0; i < MAX_CLIENTS; i++){
 			if (clients[i] == NULL){
 				continue;
 			} else if (!clients[i]->isActive()){
 				cout << "\rClient " << i << " disconnected.." << endl;
 				delete clients[i];
 				clients[i] = NULL;
+				amount_clients--;
 				continue;
 			}
 
@@ -132,7 +136,7 @@ int main(void){
 
 	accept_clients.join();
 
-	for (int i = 0; i < amount_clients; i++){
+	for (int i = 0; i < MAX_CLIENTS; i++){
 		if (clients[i] != NULL){
 			delete clients[i];
 		}

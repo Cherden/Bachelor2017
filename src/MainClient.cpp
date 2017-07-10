@@ -15,6 +15,8 @@
 
 #define LOG_LEVEL DEBUG
 
+#define PRINT_TIME_INFO
+
 
 using namespace std;
 using namespace chrono;
@@ -36,8 +38,14 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
-	char* video_image;
-	char* depth_image;
+	string video_string;
+	video_string.resize(VIDEO_FRAME_MAX_SIZE);
+
+	string depth_string;
+	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
+
+	char* video_image = &video_string[0];
+	char* depth_image = &depth_string[0];
 
   	KinectFrameMessage frame_message;
 
@@ -65,9 +73,17 @@ int main(void){
 	Connection con;
 	con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2");
 
+
+	high_resolution_clock::time_point total_start_time;
 	high_resolution_clock::time_point start_time;
 	high_resolution_clock::time_point end_time;
-	time_t timestamp;
+	duration<double, std::milli> diff_time;
+	time_t timestamp = 0;
+
+#ifdef PRINT_TIME_INFO
+	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
+	int frames = 0;
+	int saved_frames = 0;
 
 	double tget_data = 0;
 	double tget_data_min = 2147483647;
@@ -89,8 +105,7 @@ int main(void){
 	double tsend_data_min = 2147483647;
 	double tsend_data_max = 0;
 	double tsend_data_avg = 0;
-
-	duration<double, std::milli> diff_time;
+#endif
 
 
 	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
@@ -103,14 +118,15 @@ int main(void){
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
 	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
 
-	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
-	int frames = 0;
+
 
 	cout << "Sending data to server.." << endl;
 	while(running){
 		if (con.isClosed()){
 			break;
 		}
+
+		total_start_time = high_resolution_clock::now();
 
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
@@ -123,22 +139,26 @@ int main(void){
 			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
+
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
 		timestamp = system_clock::to_time_t(end_time);
 
+#ifdef PRINT_TIME_INFO
 		tget_data = diff_time.count();
 		tget_data_min = tget_data < tget_data_min ? tget_data : tget_data_min;
 		tget_data_max = tget_data > tget_data_max ? tget_data : tget_data_max;
 		tget_data_avg = (tget_data_avg + tget_data) / 2;
-		LOG_DEBUG << "time to capture sensor data: " << tget_data
-			<< " ms" << endl;
 
 		start_time = high_resolution_clock::now();
-		frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
-		frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
+#endif
+
+		frame_message.set_allocated_fvideo_data(&video_string);
+		frame_message.set_allocated_fdepth_data(&depth_string);
 		frame_message.set_timestamp(timestamp);
+
+#ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
@@ -146,15 +166,19 @@ int main(void){
 		tset_data_min = tset_data < tset_data_min ? tset_data : tset_data_min;
 		tset_data_max = tset_data > tset_data_max ? tset_data : tset_data_max;
 		tset_data_avg = (tset_data_avg + tset_data) / 2;
-		LOG_DEBUG << "time to put data in protobuf message: " << tset_data
-			<< " ms" << endl;
 
 		start_time = high_resolution_clock::now();
+#endif
+
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
 		send_data = malloc(size);
 		frame_message.SerializeToArray(send_data, size);
+		frame_message.release_fvideo_data();
+		frame_message.release_fdepth_data();
+
+#ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
@@ -164,15 +188,17 @@ int main(void){
 		tserialize_data_max = tserialize_data > tserialize_data_max
 			? tserialize_data : tserialize_data_max;
 		tserialize_data_avg = (tserialize_data_avg + tserialize_data) / 2;
-		LOG_DEBUG << "time to serialize protobuf message: "
-			<< tserialize_data << " ms" << endl;
 
 		start_time = high_resolution_clock::now();
+#endif
+
 		uint32_t size_nw = htonl(size);
 		con.sendData((void*) &size_nw, 4);
 		con.sendData(send_data, size);
 
 		free(send_data);
+
+#ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
@@ -180,44 +206,51 @@ int main(void){
 		tsend_data_min = tsend_data < tsend_data_min ? tsend_data : tsend_data_min;
 		tsend_data_max = tsend_data > tsend_data_max ? tsend_data : tsend_data_max;
 		tsend_data_avg = (tsend_data_avg + tsend_data) / 2;
-		LOG_DEBUG << "time to send protobuf message: "	<< tsend_data
-			<< " ms" << endl;
 
 		frames++;
 		diff_time = high_resolution_clock::now() - for_fps;
 		if (diff_time.count() >= 1000){
-			//printf("\033[1K")
-		//	printf("\033[H");
-			cout << "\x1B[2J\x1B[H"
-				<< "Time to capture sensor data: \n"
-					<< "\tACT = " << tget_data
-					<< "\tMIN = " << tget_data_min
-					<< "\tMAX = " << tget_data_max
-					<< "\tAVG = " << tget_data_avg
-				<< "\nTime to put data in protobuf message: \n"
-					<< "\tACT = " << tset_data
-					<< "\tMIN = " << tset_data_min
-					<< "\tMAX = " << tset_data_max
-					<< "\tAVG = " << tset_data_avg
-				<< "\nTime to serialize protobuf message: \n"
-					<< "\tACT = " << tserialize_data
-					<< "\tMIN = " << tserialize_data_min
-					<< "\tMAX = " << tserialize_data_max
-					<< "\tAVG = " << tserialize_data_avg
-				<< "\nTime to send protobuf message: \n"
-					<< "\tACT = " << tsend_data
-					<< "\tMIN = " << tsend_data_min
-					<< "\tMAX = " << tsend_data_max
-					<< "\tAVG = " << tsend_data_avg
-				<< "\nRunning at " << frames << " FPS"
-				<< flush;
+			saved_frames = frames;
+
 			for_fps = high_resolution_clock::now();
 			frames = 0;
 		}
 
-		//clock_t wait_time = clock() + 33333 - diff_time_total;
-		//while (wait_time - clock()  > 0){}
-		//usleep(wait_time);
+		cout << "\x1B[2J\x1B[H"		//clear screen
+			<< "Time to capture sensor data (ms): \n"
+				<< "\tACT = " << tget_data
+				<< "\tMIN = " << tget_data_min
+				<< "\tMAX = " << tget_data_max
+				<< "\tAVG = " << tget_data_avg
+			<< "\nTime to put data in protobuf message (ms): \n"
+				<< "\tACT = " << tset_data
+				<< "\tMIN = " << tset_data_min
+				<< "\tMAX = " << tset_data_max
+				<< "\tAVG = " << tset_data_avg
+			<< "\nTime to serialize protobuf message (ms): \n"
+				<< "\tACT = " << tserialize_data
+				<< "\tMIN = " << tserialize_data_min
+				<< "\tMAX = " << tserialize_data_max
+				<< "\tAVG = " << tserialize_data_avg
+			<< "\nTime to send protobuf message (ms): \n"
+				<< "\tACT = " << tsend_data
+				<< "\tMIN = " << tsend_data_min
+				<< "\tMAX = " << tsend_data_max
+				<< "\tAVG = " << tsend_data_avg
+			<< "\nRunning at " << saved_frames << " FPS" << endl;
+#endif
+
+		end_time = high_resolution_clock::now();
+		diff_time = end_time - total_start_time;
+
+#ifdef PRINT_TIME_INFO
+		cout << "Total time for processing data " << diff_time.count() << endl;
+#endif
+
+		int fps_time = 33333;
+		if (fps_time - (int) diff_time.count() > 0){
+			usleep(fps_time - (int) diff_time.count());
+		}
 	}
 
 	con.closeConnection();

@@ -57,9 +57,9 @@ void Client::_handleFrameMessage(int len){
 		|| _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
 			<< endl;
+	} else {
+		_data_available = 1;
 	}
-
-	_data_available = 1;
 
 	_data_mutex.unlock();
 
