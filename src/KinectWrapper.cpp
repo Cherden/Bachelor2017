@@ -1,9 +1,5 @@
 #include "KinectWrapper.h"
 
-extern "C"{
-#include "libfreenect/libfreenect.h"
-#include "libfreenect/libfreenect_sync.h"
-}
 
 
 KinectWrapper::KinectWrapper(){}
@@ -15,6 +11,10 @@ KinectWrapper::~KinectWrapper(){
 KinectWrapper KinectWrapper::getInstance(){
 	static KinectWrapper kw;
 	return kw;
+}
+
+void KinectWrapper::setLed(LedOption op){
+	freenect_sync_set_led((freenect_led_options) op, 0);
 }
 
 int KinectWrapper::getData(FrameInfo info, char** data){

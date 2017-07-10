@@ -4,11 +4,26 @@
 #include <stdint.h>
 #include <opencv2/opencv.hpp>
 
+extern "C"{
+#include "libfreenect/libfreenect_sync.h"
+}
 
 typedef enum{
     DEPTH,
     VIDEO
 } FrameInfo;
+
+/*
+typedef enum {
+	LED_OFF              = 0,
+	LED_GREEN            = 1,
+	LED_RED              = 2,
+	LED_YELLOW           = 3,
+	LED_BLINK_GREEN      = 4,
+	LED_BLINK_RED_YELLOW = 6
+} freenect_led_options;
+*/
+typedef freenect_led_options LedOption;
 
 /**
 	The size of data for one video frame
@@ -33,6 +48,12 @@ public:
 		@return A static reference to the only class instance.
 	*/
 	static KinectWrapper getInstance();
+
+	/**
+		Wrapping c_syncs freenect_sync_set_led for LED control on Kinect.
+		@param op The future state of the LED (see freenect_led_options above).
+	*/
+	void setLed(LedOption op);
 
 	/**
 		Get a depth or video frame from a Microsoft Kinect using the C-Sync
