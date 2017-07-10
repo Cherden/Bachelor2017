@@ -38,14 +38,17 @@ int main(void){
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
+	char* video_image;
+	char* depth_image;
+
 	string video_string;
 	video_string.resize(VIDEO_FRAME_MAX_SIZE);
 
 	string depth_string;
 	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
 
-	char* video_image = &video_string[0];
-	char* depth_image = &depth_string[0];
+	//char* video_image = &video_string[0];
+	//char* depth_image = &depth_string[0];
 
   	KinectFrameMessage frame_message;
 
@@ -154,8 +157,13 @@ int main(void){
 		start_time = high_resolution_clock::now();
 #endif
 
+		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
+		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+
 		frame_message.set_allocated_fvideo_data(&video_string);
 		frame_message.set_allocated_fdepth_data(&depth_string);
+		//frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
+		//frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
 		frame_message.set_timestamp(timestamp);
 
 #ifdef PRINT_TIME_INFO
@@ -175,8 +183,6 @@ int main(void){
 
 		send_data = malloc(size);
 		frame_message.SerializeToArray(send_data, size);
-		frame_message.release_fvideo_data();
-		frame_message.release_fdepth_data();
 
 #ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
@@ -197,6 +203,8 @@ int main(void){
 		con.sendData(send_data, size);
 
 		free(send_data);
+		frame_message.release_fvideo_data();
+		frame_message.release_fdepth_data();
 
 #ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
@@ -247,9 +255,10 @@ int main(void){
 		cout << "Total time for processing data " << diff_time.count() << endl;
 #endif
 
-		int fps_time = 33333;
-		if (fps_time - (int) diff_time.count() > 0){
-			usleep(fps_time - (int) diff_time.count());
+		int fps_time = 33000;
+		int duration = (int) diff_time.count() * 1000;
+		if (fps_time - duration > 0){
+			usleep(fps_time - duration);
 		}
 	}
 

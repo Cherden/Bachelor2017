@@ -10,7 +10,6 @@
 
 using namespace std;
 
-
 class Client{
 public:
 	Client(int socket);
