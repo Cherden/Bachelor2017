@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-option cc_enable_arenas = true;
-
 message KinectFrameMessage {
 	bytes fvideo_data = 1;
 	bytes fdepth_data = 2;

@@ -51,6 +51,7 @@ int main(void){
 	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
 
   	KinectFrameMessage frame_message;
+	string serialized_message;
 
 	void* send_data = 0;
 
@@ -184,8 +185,11 @@ int main(void){
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
-		send_data = malloc(size);
-		frame_message.SerializeToArray(send_data, size);
+		//send_data = malloc(size);
+		//frame_message.SerializeToArray(send_data, size);
+		frame_message.SerializeToString(&serialized_message);
+		frame_message.release_fvideo_data();
+		frame_message.release_fdepth_data();
 
 #ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
@@ -203,7 +207,8 @@ int main(void){
 
 		uint32_t size_nw = htonl(size);
 		con.sendData((void*) &size_nw, 4);
-		con.sendData(send_data, size);
+		//con.sendData(send_data, size);
+		con.sendData(serialized_message.c_str(), size);
 
 		free(send_data);
 		frame_message.release_fvideo_data();
