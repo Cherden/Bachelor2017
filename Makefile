@@ -12,12 +12,13 @@ PROTO_DIR 		= 	gen
 
 PROTO_OBJS		= 	$(patsubst $(PROTO_DIR)/%.proto, $(OBJ_DIR)/%.pb.o, $(wildcard $(PROTO_DIR)/*.proto))
 
-OBJ 			=	Connection.o KinectWrapper.o
+OBJ 			=	TCPConnection.o KinectWrapper.o
 OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o Client.o $(OBJ))
 OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ))
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))
 OBJ_TEST_SERVER = 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestServer.o $(OBJ))
 OBJ_TEST_PIC	= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, TestPic.o $(OBJ))
+OBJ_TEST_TIMER	= 	obj/TestTimer.o
 
 
 
@@ -35,6 +36,9 @@ test_server : $(OBJ_TEST_SERVER)
 
 test_pic : $(OBJ_TEST_PIC)
 	$(CXX) $(CXX_VERSION) -o test_pic $(OBJ_TEST_PIC) $(LFLAGS) $(LIBS)
+
+test_timer : $(OBJ_TEST_TIMER)
+	$(CXX) $(CXX_VERSION) -o test_timer $(OBJ_TEST_TIMER) $(LFLAGS)
 
 proto : $(PROTO_OBJS)
 

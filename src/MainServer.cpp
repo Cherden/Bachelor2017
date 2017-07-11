@@ -9,7 +9,7 @@
 #include <signal.h>
 
 #include "Client.h"
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "Logger.h"
 
 
@@ -36,7 +36,7 @@ void acceptClient(int* amount_clients){
 	int new_socket = 0;
 	struct sockaddr_in client_info = {};
 
-	Connection con;
+	TCPConnection con;
 	con.createConnection(SERVER, CONNECTION_PORT, "");
 	con.setNonBlocking();
 

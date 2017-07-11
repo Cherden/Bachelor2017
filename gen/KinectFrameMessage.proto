@@ -8,10 +8,8 @@ message KinectFrameMessage {
 	uint32 fvideo_size = 4;
 	uint32 fvideo_height = 5;
 	uint32 fvideo_width = 6;
-	uint32 fvideo_depth = 7;
 
-	uint32 fdepth_size = 8;
-	uint32 fdepth_height = 9;
-	uint32 fdepth_width = 10;
-	uint32 fdepth_depth = 11;
+	uint32 fdepth_size = 7;
+	uint32 fdepth_height = 8;
+	uint32 fdepth_width = 9;
 }

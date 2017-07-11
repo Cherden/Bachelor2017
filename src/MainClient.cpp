@@ -9,7 +9,7 @@
 
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "Logger.h"
 
 
@@ -74,7 +74,7 @@ int main(void){
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;
-	Connection con;
+	TCPConnection con;
 	if (con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
 		cout << "Can not connect to server!" << endl;
 		kinect.setLed(LED_RED);
@@ -119,12 +119,10 @@ int main(void){
 	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
 	frame_message.set_fvideo_height(VIDEO_FRAME_HEIGHT);
 	frame_message.set_fvideo_width(VIDEO_FRAME_WIDTH);
-	frame_message.set_fvideo_depth(VIDEO_FRAME_DEPTH);
 
 	frame_message.set_fdepth_size(DEPTH_FRAME_MAX_SIZE);
 	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
-	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
 
 
 
@@ -208,7 +206,7 @@ int main(void){
 		uint32_t size_nw = htonl(size);
 		con.sendData((void*) &size_nw, 4);
 		//con.sendData(send_data, size);
-		con.sendData(serialized_message.c_str(), size);
+		con.sendData((void*) serialized_message.c_str(), size);
 
 		free(send_data);
 		frame_message.release_fvideo_data();

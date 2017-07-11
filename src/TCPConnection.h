@@ -1,5 +1,5 @@
-#ifndef _CONNECTION_H_
-#define _CONNECTION_H_
+#ifndef _TCP_CONNECTION_H_
+#define _TCP_CONNECTION_H_
 
 #include <string>
 #include <arpa/inet.h>
@@ -21,20 +21,20 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
-class Connection{
+class TCPConnection{
 public:
 	/**
 		Constructor to create new socket.
 
 	*/
-	Connection();
+	TCPConnection();
 
 	/**
 		Constructor to create instance of getting a socket from accept().
 
 		@param Socket from the new accepted client.
 	*/
-	Connection(int socket);
+	TCPConnection(int socket);
 
 	/**
 		Connect to _ip_address or listen() on socket. On connect(), listen() or
@@ -65,7 +65,7 @@ public:
 		@param buffer Pointer to the data buffer, which should be sent.
 		@param buffer_size The amount of data to be sent from buffer.
 	*/
-	void sendData(void* buffer, size_t buffer_size);
+	void sendData(const void* buffer, size_t buffer_size);
 
 	//Header peekHeader();
 
@@ -104,7 +104,7 @@ public:
 		calling other functions with a closed socket.
 	*/
 	void closeConnection();
-	~Connection();
+	~TCPConnection();
 
 private:
 	/**
