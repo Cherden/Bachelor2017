@@ -82,7 +82,6 @@ int main(void){
 	}
 
 
-	high_resolution_clock::time_point total_start_time;
 	high_resolution_clock::time_point start_time;
 	high_resolution_clock::time_point end_time;
 	duration<double, std::milli> diff_time;
@@ -132,8 +131,6 @@ int main(void){
 		if (con.isClosed()){
 			break;
 		}
-
-		total_start_time = high_resolution_clock::now();
 
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
@@ -254,11 +251,9 @@ int main(void){
 			<< "\nRunning at " << saved_frames << " FPS" << endl;
 #endif
 
-		end_time = high_resolution_clock::now();
-		diff_time = end_time - total_start_time;
-
 #ifdef PRINT_TIME_INFO
-		cout << "Total time for processing data " << diff_time.count() << endl;
+		cout << "Total time for processing data "
+			<< tget_data + tset_data + tserialize_data + tsend_data << endl;
 #endif
 
 		int fps_time = 33333;
