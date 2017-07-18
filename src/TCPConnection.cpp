@@ -54,6 +54,15 @@ int TCPConnection::createConnection(ConnectionType type, int port, string ip_add
 	if (_type == SERVER){
 		_info.sin_addr.s_addr = INADDR_ANY;
 
+		int one = 1;
+    	if (setsockopt(_socket, SOL_SOCKET, SO_TIMESTAMP, &one, sizeof(one))){
+			LOG_ERROR << "failed to set timestamp option, strerror : "
+				<< strerror(errno) << endl;
+
+			closeConnection();
+			return -1;
+		}
+
 		if (bind(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 			LOG_ERROR << "failed to bind the socket, strerror : "
 				<< strerror(errno) << endl;
@@ -212,6 +221,18 @@ int TCPConnection::_recvChunks(void* buffer, int buffer_size){
 
 	return recevied_bytes;
 }
+
+/*int TCPConnection::_getTimestamp(){
+	char ctrl[CMSG_SPACE(sizeof(struct timeval))];
+    struct cmsghdr *cmsg = (struct cmsghdr *) &ctrl;
+
+	if (cmsg->cmsg_level == SOL_SOCKET &&
+	   cmsg->cmsg_type  == SCM_TIMESTAMP &&
+	   cmsg->cmsg_len   == CMSG_LEN(sizeof(time_kernel)))
+   {
+	   memcpy(&time_kernel, CMSG_DATA(cmsg), sizeof(time_kernel));
+   }
+}*/
 
 void TCPConnection::setNonBlocking(){
 	fcntl(_socket, F_SETFL, fcntl(_socket, F_GETFL, 0) | O_NONBLOCK);

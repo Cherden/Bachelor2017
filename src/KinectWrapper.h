@@ -49,6 +49,12 @@ public:
 	static KinectWrapper getInstance();
 
 	/**
+		Modified version of https://github.com/PointCloudLibrary/pcl/blob/master/io/src/openni2_grabber.cpp#L594
+		to calculate the point cloud without importing the whole library.
+	*/
+	static void convertToXYZPointCloud(float* cloud, uint16_t* depth);
+
+	/**
 		Wrapping c_syncs freenect_sync_set_led for LED control on Kinect.
 		@param op The future state of the LED (see freenect_led_options above).
 	*/
