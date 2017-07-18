@@ -252,7 +252,8 @@ int main(void){
 		diff_time = end_time - total_start_time;
 
 #ifdef PRINT_TIME_INFO
-		cout << "Total time for processing data " << diff_time.count() << endl;
+	cout << "Total time for processing data "
+		<< tget_data + tset_data + tserialize_data + tsend_data << endl;
 #endif
 
 		int fps_time = 33000;

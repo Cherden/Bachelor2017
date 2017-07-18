@@ -2,7 +2,6 @@
 #define _KINECT_WRAPPER_H_
 
 #include <stdint.h>
-#include <opencv2/opencv.hpp>
 
 
 typedef enum{
@@ -15,7 +14,7 @@ typedef enum{
 */
 #define VIDEO_FRAME_WIDTH 		640
 #define VIDEO_FRAME_HEIGHT 		480
-#define VIDEO_FRAME_DEPTH 		CV_8UC3
+#define VIDEO_FRAME_DEPTH 		0
 #define VIDEO_FRAME_MAX_SIZE 	VIDEO_FRAME_HEIGHT * VIDEO_FRAME_WIDTH * 3
 
 /**
@@ -23,7 +22,7 @@ typedef enum{
 */
 #define DEPTH_FRAME_WIDTH 		640
 #define DEPTH_FRAME_HEIGHT 		480
-#define DEPTH_FRAME_DEPTH 		CV_16UC1
+#define DEPTH_FRAME_DEPTH 		0
 #define DEPTH_FRAME_MAX_SIZE 	VIDEO_FRAME_HEIGHT * VIDEO_FRAME_WIDTH * 2
 
 class KinectWrapper{
