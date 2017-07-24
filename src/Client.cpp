@@ -22,21 +22,37 @@ void Client::setInfo(struct sockaddr_in* info){
 	_con.setInfo(info);
 }
 
-int Client::getData(char** video, char** depth){
+int Client::getData(char** video, char** depth, float** cloud){
 	if (!_data_available){
 		return -1;
 	}
 
 	_data_mutex.lock();
 
-	*video = (char*) malloc(_sensor_data.fvideo_size());
+	if (*video == NULL){
+		*video = (char*) malloc(_sensor_data.fvideo_size());
+	}
 	memcpy(*video, _sensor_data.fvideo_data().c_str()
 		, _sensor_data.fvideo_size());
 
 
-	*depth = (char*) malloc(_sensor_data.fdepth_size());
-	memcpy(*depth, _sensor_data.fdepth_data().c_str()
-		, _sensor_data.fdepth_size());
+	if (!_sensor_data.is_point_cloud() && _sensor_data.fdepth_data() != ""){
+		if (*depth == NULL){
+			*depth = (char*) malloc(_sensor_data.fdepth_size());
+		}
+		memcpy(*depth, _sensor_data.fdepth_data().c_str()
+			, _sensor_data.fdepth_size());
+	} else if (_sensor_data.is_point_cloud()){
+		if (*cloud == NULL){
+			*cloud = (float*) malloc(_sensor_data.fdepth_size() * sizeof(float));
+		}
+		for (int i = 0; i < _sensor_data.cloud_size(); i++){
+			*cloud[i] = _sensor_data.cloud(i);
+		}
+	} else {
+		_data_mutex.unlock();
+		return -1;
+	}
 
 	_data_available = 0;
 
@@ -53,8 +69,7 @@ void Client::_handleFrameMessage(int len){
 	_data_mutex.lock();
 	_sensor_data.ParseFromArray(buf, len);
 
-	if (_sensor_data.fvideo_data() == "" || _sensor_data.fdepth_data() == ""
-		|| _sensor_data.timestamp() == 0){
+	if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
 			<< endl;
 	} else {

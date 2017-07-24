@@ -99,8 +99,9 @@ int main(void){
 
 			char* video;
 			char* depth;
+			float* cloud;
 
-			if (clients[i]->getData(&video, &depth)){
+			if (clients[i]->getData(&video, &depth, &cloud)){
 				continue;
 			}
 

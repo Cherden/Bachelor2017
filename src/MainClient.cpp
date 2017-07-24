@@ -47,9 +47,6 @@ int main(void){
 	string video_string;
 	video_string.resize(VIDEO_FRAME_MAX_SIZE);
 
-	string depth_string;
-	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
-
   	KinectFrameMessage frame_message;
 	string serialized_message;
 
@@ -144,6 +141,8 @@ int main(void){
 			continue;
 		}
 
+		KinectWrapper::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image);
+
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
 
@@ -159,10 +158,10 @@ int main(void){
 #endif
 
 		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
-		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+		//memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
 
 		frame_message.set_allocated_fvideo_data(&video_string);
-		frame_message.set_allocated_fdepth_data(&depth_string);
+		//frame_message.set_allocated_fdepth_data(&depth_string);
 		frame_message.set_timestamp(timestamp);
 
 #ifdef PRINT_TIME_INFO
@@ -180,8 +179,6 @@ int main(void){
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
-		//send_data = malloc(size);
-		//frame_message.SerializeToArray(send_data, size);
 		frame_message.SerializeToString(&serialized_message);
 		frame_message.release_fvideo_data();
 		frame_message.release_fdepth_data();
@@ -202,7 +199,6 @@ int main(void){
 
 		uint32_t size_nw = htonl(size);
 		con.sendData((void*) &size_nw, 4);
-		//con.sendData(send_data, size);
 		con.sendData((void*) serialized_message.c_str(), size);
 
 		free(send_data);

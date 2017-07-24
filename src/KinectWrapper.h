@@ -6,6 +6,7 @@
 extern "C"{
 #include "libfreenect/libfreenect_sync.h"
 }
+#include "../gen/KinectFrameMessage.pb.h"
 
 typedef enum{
     DEPTH,
@@ -24,6 +25,9 @@ typedef enum {
 */
 typedef freenect_led_options LedOption;
 
+
+#define USE_POINT_CLOUD
+
 /**
 	The size of data for one video frame
 */
@@ -38,7 +42,11 @@ typedef freenect_led_options LedOption;
 #define DEPTH_FRAME_WIDTH 		640
 #define DEPTH_FRAME_HEIGHT 		480
 //#define DEPTH_FRAME_DEPTH 		CV_16UC1
+#ifdef USE_POINT_CLOUD
+#define DEPTH_FRAME_MAX_SIZE 	DEPTH_FRAME_HEIGHT * DEPTH_FRAME_WIDTH * 6
+#else
 #define DEPTH_FRAME_MAX_SIZE 	DEPTH_FRAME_HEIGHT * DEPTH_FRAME_WIDTH * 2
+#endif
 
 class KinectWrapper{
 public:
@@ -52,7 +60,7 @@ public:
 		Modified version of https://github.com/PointCloudLibrary/pcl/blob/master/io/src/openni2_grabber.cpp#L594
 		to calculate the point cloud without importing the whole library.
 	*/
-	static void convertToXYZPointCloud(float* cloud, uint16_t* depth);
+	static void convertToXYZPointCloud(KinectFrameMessage& message, uint16_t* depth);
 
 	/**
 		Wrapping c_syncs freenect_sync_set_led for LED control on Kinect.

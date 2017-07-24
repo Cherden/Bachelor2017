@@ -16,7 +16,7 @@ public:
 	Client(int socket);
 
 	void setInfo(struct sockaddr_in* info);
-	int getData(char** video, char** depth);
+	int getData(char** video, char** depth, float** cloud);
 
 	int isActive(){ return _running; };
 
