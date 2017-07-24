@@ -9,7 +9,7 @@
 
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "Logger.h"
 
 
@@ -31,12 +31,15 @@ void signalHandler(int signal){
 }
 
 int main(void){
+	KinectWrapper kinect = KinectWrapper::getInstance();
+
 	if (getuid()){
 		cout << "You have to have root permission! Try sudo." << endl;
+		kinect.setLed(LED_RED);
 		return -1;
 	}
 
-	KinectWrapper kinect = KinectWrapper::getInstance();
+	kinect.setLed(LED_YELLOW);
 
 	char* video_image;
 	char* depth_image;
@@ -51,6 +54,7 @@ int main(void){
 	//char* depth_image = &depth_string[0];
 
   	KinectFrameMessage frame_message;
+	string serialized_message;
 
 	void* send_data = 0;
 
@@ -73,9 +77,12 @@ int main(void){
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;
-	Connection con;
-	con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2");
-
+	TCPConnection con;
+	if (con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
+		cout << "Can not connect to server!" << endl;
+		kinect.setLed(LED_RED);
+		return -1;
+	}
 
 	high_resolution_clock::time_point total_start_time;
 	high_resolution_clock::time_point start_time;
@@ -114,16 +121,20 @@ int main(void){
 	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
 	frame_message.set_fvideo_height(VIDEO_FRAME_HEIGHT);
 	frame_message.set_fvideo_width(VIDEO_FRAME_WIDTH);
-	frame_message.set_fvideo_depth(VIDEO_FRAME_DEPTH);
 
 	frame_message.set_fdepth_size(DEPTH_FRAME_MAX_SIZE);
 	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
-	frame_message.set_fdepth_depth(DEPTH_FRAME_DEPTH);
+#ifdef USE_POINT_CLOUD
+	frame_message.set_is_point_cloud(true);
+#else
+	frame_message.set_is_point_cloud(false);
+#endif
 
 
 
 	cout << "Sending data to server.." << endl;
+	kinect.setLed(LED_GREEN);
 	while(running){
 		if (con.isClosed()){
 			break;
@@ -142,6 +153,10 @@ int main(void){
 			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
+
+#ifdef USE_POINT_CLOUD
+		KinectWrapper::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image);
+#endif
 
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
@@ -162,8 +177,7 @@ int main(void){
 
 		frame_message.set_allocated_fvideo_data(&video_string);
 		frame_message.set_allocated_fdepth_data(&depth_string);
-		//frame_message.set_fvideo_data((void*) video_image, VIDEO_FRAME_MAX_SIZE);
-		//frame_message.set_fdepth_data((void*) depth_image, DEPTH_FRAME_MAX_SIZE);
+
 		frame_message.set_timestamp(timestamp);
 
 #ifdef PRINT_TIME_INFO
@@ -181,8 +195,9 @@ int main(void){
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
-		send_data = malloc(size);
-		frame_message.SerializeToArray(send_data, size);
+		frame_message.SerializeToString(&serialized_message);
+		frame_message.release_fvideo_data();
+		frame_message.release_fdepth_data();
 
 #ifdef PRINT_TIME_INFO
 		end_time = high_resolution_clock::now();
@@ -200,7 +215,7 @@ int main(void){
 
 		uint32_t size_nw = htonl(size);
 		con.sendData((void*) &size_nw, 4);
-		con.sendData(send_data, size);
+		con.sendData((void*) serialized_message.c_str(), size);
 
 		free(send_data);
 		frame_message.release_fvideo_data();
@@ -248,21 +263,20 @@ int main(void){
 			<< "\nRunning at " << saved_frames << " FPS" << endl;
 #endif
 
-		end_time = high_resolution_clock::now();
-		diff_time = end_time - total_start_time;
-
 #ifdef PRINT_TIME_INFO
-	cout << "Total time for processing data "
-		<< tget_data + tset_data + tserialize_data + tsend_data << endl;
+		cout << "Total time for processing data "
+			<< tget_data + tset_data + tserialize_data + tsend_data << endl;
 #endif
 
-		int fps_time = 33000;
-		int duration = (int) diff_time.count() * 1000;
+		int fps_time = 30000;
+		diff_time = high_resolution_clock::now() - total_start_time;
+		int duration = (int) diff_time.count();
 		if (fps_time - duration > 0){
 			usleep(fps_time - duration);
 		}
 	}
 
+	kinect.setLed(LED_BLINK_GREEN);
 	con.closeConnection();
 
 	return 0;

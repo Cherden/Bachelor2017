@@ -5,7 +5,7 @@
 #include <thread>
 #include <mutex>
 
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "../gen/KinectFrameMessage.pb.h"
 
 using namespace std;
@@ -15,7 +15,7 @@ public:
 	Client(int socket);
 
 	void setInfo(struct sockaddr_in* info);
-	int getData(char** video, char** depth);
+	int getData(char** video, char** depth, float** cloud);
 
 	int isActive(){ return _running; };
 
@@ -26,7 +26,7 @@ private:
 	void _threadHandle();
 	void _handleFrameMessage(int len);
 
-	Connection _con;
+	TCPConnection _con;
 
 	KinectFrameMessage _sensor_data;
 	volatile int _data_available;

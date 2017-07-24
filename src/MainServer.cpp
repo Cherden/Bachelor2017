@@ -11,7 +11,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "Client.h"
-#include "Connection.h"
+#include "TCPConnection.h"
 #include "Logger.h"
 
 
@@ -39,7 +39,7 @@ void acceptClient(int* amount_clients){
 	int new_socket = 0;
 	struct sockaddr_in client_info = {};
 
-	Connection con;
+	TCPConnection con;
 	con.createConnection(SERVER, CONNECTION_PORT, "");
 	con.setNonBlocking();
 
@@ -99,10 +99,11 @@ int main(void){
 				continue;
 			}
 
-			char* video;
-			char* depth;
+			char* video = NULL;
+			char* depth = NULL;
+			float* cloud = NULL;
 
-			if (clients[i]->getData(&video, &depth)){
+			if (clients[i]->getData(&video, &depth, &cloud)){
 				continue;
 			}
 
@@ -116,8 +117,8 @@ int main(void){
  			imshow("depth " + to_string(i), depth_mat);
  			cvWaitKey(1);
 
-			free(video);
-			free(depth);
+			//free(video);
+			//free(depth);
 
 			frames[i]++;
 		}
