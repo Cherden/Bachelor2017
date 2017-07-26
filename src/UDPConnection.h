@@ -1,17 +1,10 @@
-#ifndef _TCP_CONNECTION_H_
-#define _TCP_CONNECTION_H_
+#ifndef _UDP_CONNECTION_H_
+#define _UDP_CONNECTION_H_
 
 #include "Connection.h"
 
-class TCPConnection: public Connection{
+class UDPConnection: public Connection{
 public:
-	/**
-		Constructor to create instance of getting a socket from accept().
-
-		@param Socket from the new accepted client.
-	*/
-	TCPConnection(int socket);
-
 	/**
 		Inherited from Connection.
 	*/
@@ -20,5 +13,8 @@ public:
 	void sendData(const void* buffer, size_t buffer_size);
 	void recvData(void* buffer, int buffer_size);
 };
+
+private:
+	int _port;
 
 #endif
