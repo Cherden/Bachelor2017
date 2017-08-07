@@ -47,6 +47,9 @@ int main(void){
 	string video_string;
 	video_string.resize(VIDEO_FRAME_MAX_SIZE);
 
+	string depth_string;
+	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
+
   	KinectFrameMessage frame_message;
 	string serialized_message;
 
@@ -120,7 +123,11 @@ int main(void){
 	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
 	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
 
-
+#ifdef USE_POINT_CLOUD
+	frame_message.set_is_point_cloud(true);
+#else
+	frame_message.set_is_point_cloud(false);
+#endif
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
@@ -141,7 +148,9 @@ int main(void){
 			continue;
 		}
 
+#ifdef USE_POINT_CLOUD
 		KinectWrapper::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image);
+#endif
 
 		end_time = high_resolution_clock::now();
 		diff_time = end_time - start_time;
@@ -158,10 +167,10 @@ int main(void){
 #endif
 
 		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
-		//memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
 
 		frame_message.set_allocated_fvideo_data(&video_string);
-		//frame_message.set_allocated_fdepth_data(&depth_string);
+		frame_message.set_allocated_fdepth_data(&depth_string);
 		frame_message.set_timestamp(timestamp);
 
 #ifdef PRINT_TIME_INFO

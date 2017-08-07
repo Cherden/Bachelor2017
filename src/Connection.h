@@ -1,7 +1,10 @@
 #ifndef _CONNECTION_H_
 #define _CONNECTION_H_
 
+#include <fcntl.h>
+#include <cstring>
 #include <string>
+#include <unistd.h>
 #include <arpa/inet.h>
 
 #include "Logger.h"
@@ -100,7 +103,7 @@ public:
 		@param info The struct, from which the connection will copy.
 	*/
 	void setInfo(struct sockaddr_in* info){
-		memcpy(&_info, info, sizeof(struct sockaddr_in));
+		std::memcpy(&_info, info, sizeof(struct sockaddr_in));
 	};
 
 	/**
@@ -123,7 +126,7 @@ public:
 		}
 	}
 
-private:
+protected:
 	int _socket;				//The socket of the connection.
 	ConnectionType _type;		//The type of connection (SERVER or CLIENT).
 	struct sockaddr_in _info;	//Contains information about the other part of

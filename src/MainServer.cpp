@@ -107,8 +107,12 @@ int main(void){
 
 			//do stuff
 
-			free(video);
-			free(depth);
+			if (video){
+				free(video);				
+			}
+			if (depth){
+				free(depth);
+			}
 
 			frames[i]++;
 		}

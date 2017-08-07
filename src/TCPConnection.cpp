@@ -11,12 +11,12 @@
 
 using namespace std;
 
-TCPConnection::TCPConnection(int socket)
-	: _socket(socket)
-	, _type(CLIENT)
-	, _info({}) {
-		LOG_DEBUG << "created connection object with socket " << socket << endl;
-	}
+TCPConnection::TCPConnection(int socket){
+	_socket = socket;
+	_type = CLIENT;
+	_info = {};
+	LOG_DEBUG << "created connection object with socket " << socket << endl;
+}
 
 int TCPConnection::createConnection(ConnectionType type, int port, string ip_address){
 	struct sockaddr_in me;

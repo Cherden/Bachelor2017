@@ -35,8 +35,7 @@ int Client::getData(char** video, char** depth, float** cloud){
 	memcpy(*video, _sensor_data.fvideo_data().c_str()
 		, _sensor_data.fvideo_size());
 
-
-	if (!_sensor_data.is_point_cloud() && _sensor_data.fdepth_data() != ""){
+	if (!_sensor_data.is_point_cloud()){
 		if (*depth == NULL){
 			*depth = (char*) malloc(_sensor_data.fdepth_size());
 		}
@@ -61,6 +60,20 @@ int Client::getData(char** video, char** depth, float** cloud){
 	return 0;
 }
 
+int hasRequiredFields(KinectFrameMessage& fm){
+	if (fm.fvideo_data() == ""){
+		LOG_ERROR << "message does not contain fvideo_data()" << endl;
+	} else if (fm.fdepth_data() == ""){
+		LOG_ERROR << "message does not contain fdepth_data()" << endl;
+	} else if (fm.timestamp() == 0){
+		LOG_ERROR << "message does not contain timestamp()" << endl;
+	} else {
+		return true;
+	}
+
+	return false;
+}
+
 void Client::_handleFrameMessage(int len){
 	char* buf = (char*) malloc(len);
 
@@ -69,10 +82,7 @@ void Client::_handleFrameMessage(int len){
 	_data_mutex.lock();
 	_sensor_data.ParseFromArray(buf, len);
 
-	if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
-		LOG_ERROR << "message does not contain at least one required field"
-			<< endl;
-	} else {
+	if (hasRequiredFields(_sensor_data)){
 		_data_available = 1;
 	}
 

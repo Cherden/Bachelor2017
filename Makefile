@@ -3,7 +3,7 @@ PROTO_CC 		= 	protoc
 CXX_VERSION 	= 	-std=c++11
 CFLAGS 			= 	-Wall -c -g
 LFLAGS 			= 	-Wall -g -L/usr/local/lib/
-LIBS			=	-lprotobuf `pkg-config --libs --cflags opencv` -lfreenect -lfreenect_sync -lpthread
+LIBS			=	-lprotobuf -lfreenect -lfreenect_sync -lpthread
 
 
 OBJ_DIR 		=	obj
