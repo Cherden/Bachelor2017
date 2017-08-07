@@ -29,19 +29,19 @@ int Client::getData(char** video, char** depth, float** cloud){
 
 	_data_mutex.lock();
 
+	int size = _sensor_data.fvideo_data().capacity();
 	if (*video == NULL){
-		*video = (char*) malloc(_sensor_data.fvideo_size());
+		*video = (char*) malloc(size);
 	}
-	memcpy(*video, _sensor_data.fvideo_data().c_str()
-		, _sensor_data.fvideo_size());
+	memcpy(*video, _sensor_data.fvideo_data().c_str(), size);
 
 
 	if (!_sensor_data.is_point_cloud() && _sensor_data.fdepth_data() != ""){
+		size = _sensor_data.fdepth_data().capacity();
 		if (*depth == NULL){
-			*depth = (char*) malloc(_sensor_data.fdepth_size());
+			*depth = (char*) malloc(size);
 		}
-		memcpy(*depth, _sensor_data.fdepth_data().c_str()
-			, _sensor_data.fdepth_size());
+		memcpy(*depth, _sensor_data.fdepth_data().c_str(), size);
 	} else if (_sensor_data.is_point_cloud()){
 		if (*cloud == NULL){
 			*cloud = (float*) malloc(_sensor_data.fdepth_size() * sizeof(float));

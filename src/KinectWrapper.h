@@ -42,11 +42,7 @@ typedef freenect_led_options LedOption;
 #define DEPTH_FRAME_WIDTH 		640
 #define DEPTH_FRAME_HEIGHT 		480
 //#define DEPTH_FRAME_DEPTH 		CV_16UC1
-#ifdef USE_POINT_CLOUD
-#define DEPTH_FRAME_MAX_SIZE 	DEPTH_FRAME_HEIGHT * DEPTH_FRAME_WIDTH * 6
-#else
 #define DEPTH_FRAME_MAX_SIZE 	DEPTH_FRAME_HEIGHT * DEPTH_FRAME_WIDTH * 2
-#endif
 
 class KinectWrapper{
 public:

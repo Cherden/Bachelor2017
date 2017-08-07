@@ -50,9 +50,6 @@ int main(void){
 	string depth_string;
 	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
 
-	//char* video_image = &video_string[0];
-	//char* depth_image = &depth_string[0];
-
   	KinectFrameMessage frame_message;
 	string serialized_message;
 
@@ -117,14 +114,6 @@ int main(void){
 	double tsend_data_avg = 0;
 #endif
 
-
-	frame_message.set_fvideo_size(VIDEO_FRAME_MAX_SIZE);
-	frame_message.set_fvideo_height(VIDEO_FRAME_HEIGHT);
-	frame_message.set_fvideo_width(VIDEO_FRAME_WIDTH);
-
-	frame_message.set_fdepth_size(DEPTH_FRAME_MAX_SIZE);
-	frame_message.set_fdepth_height(DEPTH_FRAME_HEIGHT);
-	frame_message.set_fdepth_width(DEPTH_FRAME_WIDTH);
 #ifdef USE_POINT_CLOUD
 	frame_message.set_is_point_cloud(true);
 #else
