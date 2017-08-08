@@ -1,20 +1,16 @@
-#ifndef _TCP_CONNECTION_H_
-#define _TCP_CONNECTION_H_
+#ifndef _UDP_CONNECTION_H_
+#define _UDP_CONNECTION_H_
 
 #include "Connection.h"
 
-class TCPConnection: public Connection{
+class UDPConnection: public Connection{
 public:
-	/**
-		Call super class constructor.
-	*/
-	TCPConnection() : Connection(){};
+	static int next_port;
 
-	/**
-		Constructor to create instance of getting a socket from accept().
-		@param Socket from the new accepted client.
-	*/
-	TCPConnection(int socket);
+public:
+
+	UDPConnection() : Connection(){};
+	UDPConnection(int port);
 
 	/**
 		Inherited from Connection.
@@ -24,5 +20,9 @@ public:
 	void sendData(const void* buffer, size_t buffer_size);
 	void recvData(void* buffer, int buffer_size);
 };
+
+private:
+	int _port;
+	std::string _ip_address;
 
 #endif

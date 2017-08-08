@@ -4,8 +4,8 @@
 
 #include "Logger.h"
 
-Client::Client(int socket)
-	: _con(socket)
+Client::Client(int info)
+	: _con(info)
 	, _sensor_data()
 	, _data_available(0)
 	, _running(1)

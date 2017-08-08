@@ -36,10 +36,14 @@ void signalHandler(int signal)
 Client* clients[MAX_CLIENTS] = {0};
 
 void acceptClient(int* amount_clients){
-	int new_socket = 0;
+	int accept = 0;
 	struct sockaddr_in client_info = {};
 
+#ifdef USE_UDP
+	UDPConnection con;
+#else
 	TCPConnection con;
+#endif
 	con.createConnection(SERVER, CONNECTION_PORT, "");
 	con.setNonBlocking();
 
@@ -49,8 +53,8 @@ void acceptClient(int* amount_clients){
 	*/
 	while (running){
 		if (*amount_clients < MAX_CLIENTS){
-			new_socket = con.acceptConnection(&client_info);
-			if (new_socket >= 0){
+			accept = con.acceptConnection(&client_info);
+			if (accept >= 0){
 				int pos = 0;
 
 				for (; pos < MAX_CLIENTS; pos++){
@@ -60,7 +64,7 @@ void acceptClient(int* amount_clients){
 				}
 
 				cout << '\r' << "Accepted client " << pos << ".." << endl;
-				clients[pos] = new Client(new_socket);
+				clients[pos] = new Client(accept);
 				clients[pos]->setInfo(&client_info);
 				(*amount_clients)++;
 			}

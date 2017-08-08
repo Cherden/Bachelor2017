@@ -26,7 +26,11 @@ private:
 	void _threadHandle();
 	void _handleFrameMessage(int len);
 
+#ifdef USE_UDP
+	UDPConnection _con;
+#else
 	TCPConnection _con;
+#endif
 
 	KinectFrameMessage _sensor_data;
 	volatile int _data_available;

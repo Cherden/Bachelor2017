@@ -11,23 +11,11 @@
 
 using namespace std;
 
-TCPConnection::TCPConnection()
-	: _socket(0)
-	, _type(UNDEFINED)
-	, _info({}) {}
-
-TCPConnection::TCPConnection(int socket)
-	: _socket(socket)
-	, _type(CLIENT)
-	, _info({}) {
-		LOG_DEBUG << "created connection object with socket " << socket << endl;
-	}
-
-TCPConnection::~TCPConnection(){
-	if (_socket){
-		LOG_WARNING << "connection instance died without closing first" << endl;
-		close(_socket);
-	}
+TCPConnection::TCPConnection(int socket){
+	_socket = socket;
+	_type = CLIENT;
+	_info = {};
+	LOG_DEBUG << "created tcp connection object with socket " << socket << endl;
 }
 
 int TCPConnection::createConnection(ConnectionType type, int port, string ip_address){
@@ -93,28 +81,6 @@ int TCPConnection::createConnection(ConnectionType type, int port, string ip_add
 	return 0;
 }
 
-/*	DEPRECATED VERSION
-
-struct sockaddr_in* TCPConnection::acceptConnection(int* new_socket){
-	socklen_t client_len = sizeof(struct sockaddr_in);
-	struct sockaddr_in* client = (struct sockaddr_in*) malloc(client_len);
-
-	memset((void*) client, 0, client_len);
-
-	if ((*new_socket
-	 	 = accept(_socket, (struct sockaddr*) client, &client_len)) < 0){
-		LOG_WARNING << "accepting new client failed, strerror : "
-			<< strerror(errno) << endl;
-		free(client);
-		return 0;
-	}
-
-	LOG_DEBUG << "accepted new client on " << _socket << ", new socket "
-		<< *new_socket << endl;
-
-	return client;
-}*/
-
 int TCPConnection::acceptConnection(struct sockaddr_in* new_client){
 	if (_type != SERVER){
 		LOG_WARNING << "called acceptConnection() with non SERVER type" << endl;
@@ -156,29 +122,6 @@ void TCPConnection::sendData(const void* buffer, size_t buffer_size){
 	}
 }
 
-/*	DEPRECATED FUNCTION
-
-	Header Connection::peekHeader(){
-	Header h = UNKNOWN;
-	int ret = 0;
-
-	if (_socket){
-		if ((ret = recv(_socket, (void*) &h, sizeof(h), MSG_PEEK)) < 0){
-			LOG_ERROR << "failed to peek header : " << strerror(errno) << endl;
-		} else if (ret == 0) {
-			LOG_ERROR << "received 0 data, closing connection" << endl;
-			closeConnection();
-		} else {
-			LOG_DEBUG <<"received data with header " << h
-				<< " on socket " << _socket << endl;
-		}
-	} else {
-		LOG_ERROR << "failed to peek header because the socket is closed"
-		  << endl;
-	}
-	return h;
-}*/
-
 void TCPConnection::recvData(void* buffer, int buffer_size){
 	int ret = 0;
 
@@ -202,30 +145,26 @@ void TCPConnection::recvData(void* buffer, int buffer_size){
 	}
 }
 
-int TCPConnection::_recvChunks(void* buffer, int buffer_size){
+/*int TCPConnection::_recvChunks(void* buffer, int buffer_size){
 	int ret = 0;
 	int recevied_bytes = 0;
-
 	while(recevied_bytes != buffer_size){
 		if (_socket){
 			if ((ret = recv(_socket, (void*) &((char*)buffer)[recevied_bytes]
 					, buffer_size - recevied_bytes, 0)) < 0){
 				return ret;
 			}
-
 			recevied_bytes += ret;
 		} else {
 			return 0;
 		}
 	}
-
 	return recevied_bytes;
-}
+}*/
 
 /*int TCPConnection::_getTimestamp(){
 	char ctrl[CMSG_SPACE(sizeof(struct timeval))];
     struct cmsghdr *cmsg = (struct cmsghdr *) &ctrl;
-
 	if (cmsg->cmsg_level == SOL_SOCKET &&
 	   cmsg->cmsg_type  == SCM_TIMESTAMP &&
 	   cmsg->cmsg_len   == CMSG_LEN(sizeof(time_kernel)))
@@ -233,23 +172,3 @@ int TCPConnection::_recvChunks(void* buffer, int buffer_size){
 	   memcpy(&time_kernel, CMSG_DATA(cmsg), sizeof(time_kernel));
    }
 }*/
-
-void TCPConnection::setNonBlocking(){
-	fcntl(_socket, F_SETFL, fcntl(_socket, F_GETFL, 0) | O_NONBLOCK);
-}
-
-void TCPConnection::setInfo(struct sockaddr_in* info){
-	memcpy(&_info, info, sizeof(struct sockaddr_in));
-}
-
-void TCPConnection::closeConnection(){
-	if (_socket){
-		LOG_DEBUG << "closing socket " << _socket << endl;
-		close(_socket);
-		_socket = 0;
-	}
-}
-
-int TCPConnection::isClosed(){
-	return _socket==0;
-}
