@@ -10,8 +10,15 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-#include "Client.h"
+#include "Common.h"
+
+#ifdef USE_UDP
+#include "UDPConnection.h"
+#else
 #include "TCPConnection.h"
+#endif
+
+#include "Client.h"
 #include "Logger.h"
 
 
@@ -66,6 +73,9 @@ void acceptClient(int* amount_clients){
 				cout << '\r' << "Accepted client " << pos << ".." << endl;
 				clients[pos] = new Client(accept);
 				clients[pos]->setInfo(&client_info);
+#ifdef USE_UDP
+				clients[pos]->getConnection().bind2();
+#endif
 				(*amount_clients)++;
 			}
 		}

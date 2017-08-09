@@ -22,7 +22,7 @@ public:
 	int createConnection(ConnectionType type, int port, std::string ip_address);
 	int acceptConnection(struct sockaddr_in* new_client);
 	void sendData(const void* buffer, size_t buffer_size);
-	void recvData(void* buffer, int buffer_size);
+	void recvData(void* buffer, size_t buffer_size);
 };
 
 #endif

@@ -5,7 +5,14 @@
 #include <thread>
 #include <mutex>
 
+#include "Common.h"
+
+#ifdef USE_UDP
+#include "UDPConnection.h"
+#else
 #include "TCPConnection.h"
+#endif
+
 #include "../gen/KinectFrameMessage.pb.h"
 
 using namespace std;
@@ -17,6 +24,11 @@ public:
 	void setInfo(struct sockaddr_in* info);
 	int getData(char** video, char** depth, float** cloud);
 
+#ifdef USE_UDP
+	UDPConnection& getConnection(){ return _con;};
+#else
+	TCPConnection& getConnection(){ return _con;};
+#endif
 	int isActive(){ return _running; };
 
 	~Client();

@@ -7,9 +7,16 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "Common.h"
+
+#ifdef USE_UDP
+#include "UDPConnection.h"
+#else
+#include "TCPConnection.h"
+#endif
+
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
-#include "TCPConnection.h"
 #include "Logger.h"
 
 
@@ -74,7 +81,11 @@ int main(void){
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;
+#ifdef USE_UDP
+	UDPConnection con;
+#else
 	TCPConnection con;
+#endif
 	if (con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
 		cout << "Can not connect to server!" << endl;
 		kinect.setLed(LED_RED);

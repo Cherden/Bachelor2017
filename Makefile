@@ -12,7 +12,7 @@ PROTO_DIR 		= 	gen
 
 PROTO_OBJS		= 	$(patsubst $(PROTO_DIR)/%.proto, $(OBJ_DIR)/%.pb.o, $(wildcard $(PROTO_DIR)/*.proto))
 
-OBJ 			=	TCPConnection.o KinectWrapper.o
+OBJ 			=	UDPConnection.o TCPConnection.o KinectWrapper.o
 OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o Client.o $(OBJ))
 OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ))
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))

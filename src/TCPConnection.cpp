@@ -122,7 +122,7 @@ void TCPConnection::sendData(const void* buffer, size_t buffer_size){
 	}
 }
 
-void TCPConnection::recvData(void* buffer, int buffer_size){
+void TCPConnection::recvData(void* buffer, size_t buffer_size){
 	int ret = 0;
 
 	if (_socket){

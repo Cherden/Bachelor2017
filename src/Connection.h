@@ -7,20 +7,8 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+#include "Common.h"
 #include "Logger.h"
-
-#define USE_UDP
-
-/**
-	Port used for communication from this program
-*/
-#define CONNECTION_PORT 79421
-
-/**
-	Amount of clients the server can accept
-*/
-#define MAX_CLIENTS 2
-
 
 typedef enum{
 	UNDEFINED,
@@ -77,7 +65,7 @@ public:
 		@param buffer_size The maximum amount of bytes to be written in the
 		buffer.
 	*/
-	virtual void recvData(void* buffer, int buffer_size) = 0;
+	virtual void recvData(void* buffer, size_t buffer_size) = 0;
 
 	/**
 		Check wether the socket is closed or not.
