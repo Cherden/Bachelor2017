@@ -7,11 +7,8 @@
 
 #include "Common.h"
 
-#ifdef USE_UDP
 #include "UDPConnection.h"
-#else
 #include "TCPConnection.h"
-#endif
 
 #include "../gen/KinectFrameMessage.pb.h"
 
@@ -24,11 +21,6 @@ public:
 	void setInfo(struct sockaddr_in* info);
 	int getData(char** video, char** depth, float** cloud);
 
-#ifdef USE_UDP
-	UDPConnection& getConnection(){ return _con;};
-#else
-	TCPConnection& getConnection(){ return _con;};
-#endif
 	int isActive(){ return _running; };
 
 	~Client();
@@ -37,9 +29,10 @@ public:
 private:
 	void _threadHandle();
 	void _handleFrameMessage(int len);
+	void _sendConnectionMessage();
 
-	UDPConnection _udp_con;
 	TCPConnection _tcp_con;
+	UDPConnection _udp_con;
 
 	KinectFrameMessage _sensor_data;
 	volatile int _data_available;

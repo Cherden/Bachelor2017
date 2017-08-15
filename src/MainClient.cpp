@@ -9,13 +9,11 @@
 
 #include "Common.h"
 
-#ifdef USE_UDP
 #include "UDPConnection.h"
-#else
 #include "TCPConnection.h"
-#endif
 
 #include "../gen/KinectFrameMessage.pb.h"
+#include "../gen/ConnectionMessage.pb.h"
 #include "KinectWrapper.h"
 #include "Logger.h"
 
@@ -82,7 +80,7 @@ int main(){
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;
 	TCPConnection tcp_con;
-	if (con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
+	if (tcp_con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
 		cout << "Can not connect to server!" << endl;
 		kinect.setLed(LED_RED);
 		return -1;
@@ -93,11 +91,13 @@ int main(){
 
 	tcp_con.recvData((void *) &size_nw, 4);
 	uint32_t size = ntohl(size_nw);
-	char* buf[size] = {0}
+	char* buf[size] = {0};
 	tcp_con.recvData((void*) buf, size);
 
-	m.parseFromArray(buf, size);
+	m.ParseFromArray(buf, size);
 	UDPConnection udp_con(m.udp_port());
+	udp_con.createConnection(CLIENT, -1, NULL);
+	udp_con.setInfo(tcp_con.getInfo());
 
 #ifdef USE_POINT_CLOUD
 	m.set_use_point_cloud(true);
@@ -151,7 +151,7 @@ int main(){
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
-		if (con.isClosed()){
+		if (tcp_con.isClosed()){
 			break;
 		}
 
@@ -229,8 +229,8 @@ int main(){
 #endif
 
 		uint32_t size_nw = htonl(size);
-		con.sendData((void*) &size_nw, 4);
-		con.sendData((void*) serialized_message.c_str(), size);
+		tcp_con.sendData((void*) &size_nw, 4);
+		tcp_con.sendData((void*) serialized_message.c_str(), size);
 
 		free(send_data);
 		frame_message.release_fvideo_data();
@@ -292,7 +292,8 @@ int main(){
 	}
 
 	kinect.setLed(LED_BLINK_GREEN);
-	con.closeConnection();
+	tcp_con.closeConnection();
+	udp_con.closeConnection();
 
 	return 0;
 }

@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "Logger.h"
+#include "../gen/ConnectionMessage.pb.h"
 
 Client::Client(int tcp_socket, int udp_port)
 	: _tcp_con(tcp_socket)
@@ -15,12 +16,14 @@ Client::Client(int tcp_socket, int udp_port)
 
 Client::~Client(){
 	_running = 0;
-	_con.closeConnection();
+	_tcp_con.closeConnection();
+	_udp_con.closeConnection();
 	_client_thread.join();
 }
 
 void Client::setInfo(struct sockaddr_in* info){
-	_con.setInfo(info);
+	_tcp_con.setInfo(info);
+	_udp_con.setInfo(info);
 }
 
 int Client::getData(char** video, char** depth, float** cloud){
@@ -37,17 +40,17 @@ int Client::getData(char** video, char** depth, float** cloud){
 	memcpy(*video, _sensor_data.fvideo_data().c_str(), size);
 
 
-	if (!_sensor_data.is_point_cloud() && _sensor_data.fdepth_data() != ""){
+	if (!_use_point_cloud && _sensor_data.fdepth_data() != ""){
 		size = _sensor_data.fdepth_data().capacity();
 		if (*depth == NULL){
 			*depth = (char*) malloc(size);
 		}
 		memcpy(*depth, _sensor_data.fdepth_data().c_str(), size);
-	} else if (_sensor_data.is_point_cloud()){
+	} else if (_use_point_cloud){
 		if (*cloud == NULL){
-			*cloud = (float*) malloc(_sensor_data.fdepth_size() * sizeof(float));
+			*cloud = (float*) malloc(size * 3 * sizeof(float));
 		}
-		for (int i = 0; i < _sensor_data.cloud_size(); i++){
+		for (int i = 0; i < size * 3; i++){
 			*cloud[i] = _sensor_data.cloud(i);
 		}
 	} else {
@@ -65,7 +68,7 @@ int Client::getData(char** video, char** depth, float** cloud){
 void Client::_handleFrameMessage(int len){
 	char* buf = (char*) malloc(len);
 
-	_con.recvData((void *) buf, len);
+	_tcp_con.recvData((void *) buf, len);
 
 	_data_mutex.lock();
 	_sensor_data.ParseFromArray(buf, len);
@@ -97,10 +100,10 @@ void Client::_sendConnectionMessage(){
 	_tcp_con.recvData((void*) &size_nw, 4);
 
 	size = ntohl(size_nw);
-	char* buf[size] = {0}
+	char* buf[size] = {0};
 	_tcp_con.recvData((void*) buf, size);
 
-	m.parseFromArray(buf, size);
+	m.ParseFromArray(buf, size);
 
 	_use_point_cloud = m.use_point_cloud();
 	_video_height = m.video_height();
@@ -113,16 +116,16 @@ void Client::_threadHandle(){
 	uint64_t size = 0;
 	int timestamp = 0;
 
-	_udp_con.bind2();
+	_udp_con.createConnection(SERVER, -1, NULL);
 	_sendConnectionMessage();
 
 	while (_running){
-		if (_con.isClosed()){
+		if (_tcp_con.isClosed()){
 			_running = 0;
 			break;
 		}
 
-		_con.recvData((void*) &size, 4);
+		_tcp_con.recvData((void*) &size, 4);
 		size = ntohl(size);
 
 		LOG_DEBUG << "next protobuf message size is " << size << endl;

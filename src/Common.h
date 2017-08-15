@@ -1,5 +1,3 @@
-//#define USE_UDP
-
 /**
 	Port used for communication from this program
 */

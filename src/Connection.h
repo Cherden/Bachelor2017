@@ -18,8 +18,6 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
-int Connection::next_port = CONNECTION_PORT;
-
 class Connection{
 public:
 	static int next_port;
@@ -44,15 +42,6 @@ public:
 	*/
 	virtual int createConnection(ConnectionType type, int port
 		, std::string ip_address) = 0;
-
-	/**
-		Accept one new client from the listening socket. On accept() failure it
-		logs the errno output string.
-		@param new_client Pointer, where the info struct of the accepted client
-		will be saved.
-		@return Socket of the accepted client on success, -1 otherwise.
-	*/
-	virtual int acceptConnection(struct sockaddr_in* new_client) = 0;
 
 	/**
 		Send data over _socket. On send() failure it logs the errno output
@@ -95,6 +84,14 @@ public:
 	*/
 	void setInfo(struct sockaddr_in* info){
 		std::memcpy(&_info, info, sizeof(struct sockaddr_in));
+	};
+
+	/**
+		Returns the pointer to the struct containig info about the peer.
+		@return Pointer to the info struct.
+	*/
+	struct sockaddr_in* getInfo(){
+		return &_info;
 	};
 
 	/**

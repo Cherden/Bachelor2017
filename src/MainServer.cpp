@@ -27,6 +27,8 @@ using namespace std;
 using namespace chrono;
 using namespace cv;
 
+int Connection::next_port = CONNECTION_PORT;
+
 volatile bool running = true;
 void signalHandler(int signal)
 {
@@ -41,7 +43,7 @@ void signalHandler(int signal)
 Client* clients[MAX_CLIENTS] = {0};
 
 void acceptClient(int* amount_clients){
-	int accept = 0;
+	int tcp_socket = 0;
 	struct sockaddr_in client_info = {};
 
 	TCPConnection con;

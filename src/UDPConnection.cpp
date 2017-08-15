@@ -17,121 +17,44 @@ using namespace std;
 #define MAX_UDP_FRAME 1024
 #define MIN(x,y) (x < y ? x : y)
 
- UDPConnection::UDPConnection(int port)
- : _port(port)
- , _ip_address("") {
- 	_socket = 0;
- 	_type = UNDEFINED;
- 	_info = {};
+UDPConnection::UDPConnection(int port)
+	: _port(port) {
+	_socket = 0;
+	_type = UNDEFINED;
+	_info = {};
 
- 	LOG_DEBUG << "created udp connection object with port " << port << endl;
- }
-
-int UDPConnection::bind2(){
-	if (_socket){
-		close(_socket);
-	}
-
-	 _socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
- 	if (_socket < 0){
- 		LOG_ERROR << "failed to create socket (bind2) " << strerror(errno) << endl;
- 		return -1;
- 	}
-
-	struct sockaddr_in me;
-
- 	memset((char *) &me, 0, sizeof(me));
- 	me.sin_family = AF_INET;
- 	me.sin_port = htons(_port);
- 	me.sin_addr.s_addr = INADDR_ANY;
-
- 	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
- 		LOG_ERROR << "failed to rebind the socket " << strerror(errno) << endl;
- 		closeConnection();
- 		return -1;
- 	}
-
-	LOG_DEBUG << "bind2 succesfull " << _socket	<< " port " << _port << endl;
-
-	return 0;
+	LOG_DEBUG << "created udp connection object with port " << port << endl;
 }
 
 int UDPConnection::createConnection(ConnectionType type, int port, string ip_address){
-	_ip_address = ip_address;
 	_type = type;
-	_port = port;
-
-	if (this->bind2() != 0){
-		return -1;
+	if (port != -1){
+		_port = port;
 	}
 
-	if (_type == CLIENT){
-		int msg = 1;
-		struct sockaddr_in server;
-		socklen_t len = sizeof(struct sockaddr_in);
+	_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (_socket < 0){
+	   LOG_ERROR << "failed to create socket (bind2) " << strerror(errno) << endl;
+	   return -1;
+	}
 
-		memset((char*) &server, 0, sizeof(server));
-		server.sin_family = AF_INET;
-		server.sin_port = htons(port);
-		inet_aton(_ip_address.c_str(), &server.sin_addr);
+	struct sockaddr_in me;
 
-		if (sendto(_socket, &msg, sizeof(msg), 0, (struct sockaddr*) &server, len) < 0){
-			LOG_ERROR << "failed to connect (send)" << strerror(errno) << endl;
-			return -1;
-		}
+	memset((char *) &me, 0, sizeof(me));
+	me.sin_family = AF_INET;
+	me.sin_port = htons(_port);
+	me.sin_addr.s_addr = INADDR_ANY;
 
-		if (recvfrom(_socket, &msg, sizeof(msg), 0, (struct sockaddr*) &server, &len) < 0){
-			LOG_ERROR << "failed to accept (recv)" << strerror(errno) << endl;
-			return -1;
-		}
-
-		_port = ntohs(msg);
-
-		if (this->bind2() != 0){
-			return -1;
-		}
+	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
+	   LOG_ERROR << "failed to rebind the socket " << strerror(errno) << endl;
+	   closeConnection();
+	   return -1;
 	}
 
 	LOG_DEBUG << "succesfully created and bound socket " << _socket
 	 	<< " port " << _port << endl;
 
 	return 0;
-}
-
-int UDPConnection::acceptConnection(struct sockaddr_in* new_client){
-	if (_type != SERVER){
-		LOG_WARNING << "called acceptConnection() with non SERVER type" << endl;
-		return -1;
-	}
-
-	int port = -1;
-	socklen_t len = sizeof(struct sockaddr_in);
-
-	int msg = 0;
-
-	if (_socket){
-		if (recvfrom(_socket, &msg, sizeof(msg), 0, (struct sockaddr*) new_client, &len) < 0){
-			if (!(errno == EAGAIN || errno == EWOULDBLOCK)){
-				LOG_WARNING << "failed to accept (recv)" << strerror(errno) << endl;
-			}
-			return -1;
-		}
-
-		port = htons(++(UDPConnection::next_port));
-
-		if (sendto(_socket, &port, sizeof(port), 0, (struct sockaddr*) new_client, len) < 0){
-			LOG_WARNING << "failed to accept (send)" << strerror(errno) << endl;
-			return -1;
-		}
-	} else {
-		LOG_ERROR << "failed to accept because the socket is closed" << endl;
-		return -1;
-	}
-
-	LOG_DEBUG << "accepted new client, socket: " << _socket << " address: "
-		<< inet_ntoa(new_client->sin_addr) << " port: " << ntohs(port) << endl;
-
-	return port;
 }
 
 void UDPConnection::sendData(const void *buffer, size_t buffer_size){
@@ -147,7 +70,7 @@ void UDPConnection::sendData(const void *buffer, size_t buffer_size){
 	memset((char*) &server, 0, sizeof(server));
 	server.sin_family = AF_INET;
 	server.sin_port = htons(_port);
-	inet_aton(_ip_address.c_str(), &server.sin_addr);
+	//inet_aton(_ip_address.c_str(), &server.sin_addr); TODO
 
 	while(remain > 0){
 		if (_socket){

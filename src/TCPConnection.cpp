@@ -19,10 +19,6 @@ TCPConnection::TCPConnection(int socket){
 }
 
 int TCPConnection::createConnection(ConnectionType type, int port, string ip_address){
-	struct sockaddr_in me;
-
-	memset((void*) &me, 0, sizeof(me));
-
 	if (_type != UNDEFINED){
 		return -1;
 	}
