@@ -19,7 +19,7 @@ using namespace std;
 
 class Client{
 public:
-	Client(int socket);
+	Client(int tcp_socket, int udp_port);
 
 	void setInfo(struct sockaddr_in* info);
 	int getData(char** video, char** depth, float** cloud);
@@ -38,11 +38,8 @@ private:
 	void _threadHandle();
 	void _handleFrameMessage(int len);
 
-#ifdef USE_UDP
-	UDPConnection _con;
-#else
-	TCPConnection _con;
-#endif
+	UDPConnection _udp_con;
+	TCPConnection _tcp_con;
 
 	KinectFrameMessage _sensor_data;
 	volatile int _data_available;
@@ -50,6 +47,12 @@ private:
 	volatile int _running;
 	mutex _data_mutex;
 	thread _client_thread;
+
+	bool _use_point_cloud;
+	int _video_height;
+	int _video_width;
+	int _depth_height;
+	int _depth_width;
 };
 
 #endif

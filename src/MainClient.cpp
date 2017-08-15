@@ -37,7 +37,7 @@ void signalHandler(int signal){
 	}
 }
 
-int main(void){
+int main(){
 	KinectWrapper kinect = KinectWrapper::getInstance();
 
 	if (getuid()){
@@ -81,16 +81,39 @@ int main(void){
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;
-#ifdef USE_UDP
-	UDPConnection con;
-#else
-	TCPConnection con;
-#endif
+	TCPConnection tcp_con;
 	if (con.createConnection(CLIENT, CONNECTION_PORT, "192.168.1.2") < 0){
 		cout << "Can not connect to server!" << endl;
 		kinect.setLed(LED_RED);
 		return -1;
 	}
+
+	ConnectionMessage m;
+	uint32_t size_nw = 0;
+
+	tcp_con.recvData((void *) &size_nw, 4);
+	uint32_t size = ntohl(size_nw);
+	char* buf[size] = {0}
+	tcp_con.recvData((void*) buf, size);
+
+	m.parseFromArray(buf, size);
+	UDPConnection udp_con(m.udp_port());
+
+#ifdef USE_POINT_CLOUD
+	m.set_use_point_cloud(true);
+#else
+	m.set_use_point_cloud(false);
+#endif
+	m.set_video_height(VIDEO_FRAME_HEIGHT);
+	m.set_video_width(VIDEO_FRAME_WIDTH);
+	m.set_depth_height(DEPTH_FRAME_HEIGHT);
+	m.set_depth_width(DEPTH_FRAME_WIDTH);
+
+	m.SerializeToString(&serialized_message);
+	size = m.ByteSize();
+	size_nw = htonl(size);
+	tcp_con.sendData((void*) &size_nw, 4);
+	tcp_con.sendData((void*) serialized_message.c_str(), size);
 
 	high_resolution_clock::time_point total_start_time;
 	high_resolution_clock::time_point start_time;
@@ -124,14 +147,6 @@ int main(void){
 	double tsend_data_max = 0;
 	double tsend_data_avg = 0;
 #endif
-
-#ifdef USE_POINT_CLOUD
-	frame_message.set_is_point_cloud(true);
-#else
-	frame_message.set_is_point_cloud(false);
-#endif
-
-
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);

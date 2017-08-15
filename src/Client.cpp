@@ -4,8 +4,9 @@
 
 #include "Logger.h"
 
-Client::Client(int info)
-	: _con(info)
+Client::Client(int tcp_socket, int udp_port)
+	: _tcp_con(tcp_socket)
+	, _udp_con(udp_port)
 	, _sensor_data()
 	, _data_available(0)
 	, _running(1)
@@ -81,9 +82,39 @@ void Client::_handleFrameMessage(int len){
 	free(buf);
 }
 
+void Client::_sendConnectionMessage(){
+	ConnectionMessage m;
+	string serialized_message;
+
+	m.set_udp_port(_udp_con.getPort());
+	m.SerializeToString(&serialized_message);
+
+	uint32_t size = m.ByteSize();
+	uint32_t size_nw = htonl(size);
+	_tcp_con.sendData((void*) &size_nw, 4);
+	_tcp_con.sendData((void*) serialized_message.c_str(), size);
+
+	_tcp_con.recvData((void*) &size_nw, 4);
+
+	size = ntohl(size_nw);
+	char* buf[size] = {0}
+	_tcp_con.recvData((void*) buf, size);
+
+	m.parseFromArray(buf, size);
+
+	_use_point_cloud = m.use_point_cloud();
+	_video_height = m.video_height();
+	_video_width = m.video_width();
+	_depth_height = m.depth_height();
+	_depth_width = m.depth_width();
+}
+
 void Client::_threadHandle(){
 	uint64_t size = 0;
 	int timestamp = 0;
+
+	_udp_con.bind2();
+	_sendConnectionMessage();
 
 	while (_running){
 		if (_con.isClosed()){

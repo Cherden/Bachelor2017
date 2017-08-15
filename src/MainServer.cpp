@@ -12,11 +12,9 @@
 
 #include "Common.h"
 
-#ifdef USE_UDP
+#include "Connection.h"
 #include "UDPConnection.h"
-#else
 #include "TCPConnection.h"
-#endif
 
 #include "Client.h"
 #include "Logger.h"
@@ -46,11 +44,7 @@ void acceptClient(int* amount_clients){
 	int accept = 0;
 	struct sockaddr_in client_info = {};
 
-#ifdef USE_UDP
-	UDPConnection con;
-#else
 	TCPConnection con;
-#endif
 	con.createConnection(SERVER, CONNECTION_PORT, "");
 	con.setNonBlocking();
 
@@ -60,8 +54,8 @@ void acceptClient(int* amount_clients){
 	*/
 	while (running){
 		if (*amount_clients < MAX_CLIENTS){
-			accept = con.acceptConnection(&client_info);
-			if (accept >= 0){
+			tcp_socket = con.acceptConnection(&client_info);
+			if (tcp_socket >= 0){
 				int pos = 0;
 
 				for (; pos < MAX_CLIENTS; pos++){
@@ -71,11 +65,9 @@ void acceptClient(int* amount_clients){
 				}
 
 				cout << '\r' << "Accepted client " << pos << ".." << endl;
-				clients[pos] = new Client(accept);
+				clients[pos] = new Client(tcp_socket, ++(UDPConnection::next_port));
 				clients[pos]->setInfo(&client_info);
-#ifdef USE_UDP
-				clients[pos]->getConnection().bind2();
-#endif
+
 				(*amount_clients)++;
 			}
 		}
@@ -86,7 +78,7 @@ void acceptClient(int* amount_clients){
 	con.closeConnection();
 }
 
-int main(void){
+int main(){
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
 	signal(SIGQUIT, signalHandler);

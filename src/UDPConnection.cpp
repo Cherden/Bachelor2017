@@ -17,8 +17,6 @@ using namespace std;
 #define MAX_UDP_FRAME 1024
 #define MIN(x,y) (x < y ? x : y)
 
-int UDPConnection::next_port = CONNECTION_PORT;
-
  UDPConnection::UDPConnection(int port)
  : _port(port)
  , _ip_address("") {

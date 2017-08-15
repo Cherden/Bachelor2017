@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message ConnectionMessage {
+	// filled by server
+	uint32 udp_port = 1;
+
+	// filled by client
+	bool use_point_cloud = 2;
+	uint32 video_height = 3;
+	uint32 video_width = 4;
+	uint32 depth_height = 5;
+	uint32 depth_width = 6;
+}

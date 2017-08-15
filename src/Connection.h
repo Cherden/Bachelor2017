@@ -6,6 +6,8 @@
 #include <string>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
 
 #include "Common.h"
 #include "Logger.h"
@@ -16,7 +18,12 @@ typedef enum{
 	CLIENT
 } ConnectionType;
 
+int Connection::next_port = CONNECTION_PORT;
+
 class Connection{
+public:
+	static int next_port;
+
 public:
 	/**
 		Constructor to create new connection.
@@ -88,6 +95,15 @@ public:
 	*/
 	void setInfo(struct sockaddr_in* info){
 		std::memcpy(&_info, info, sizeof(struct sockaddr_in));
+	};
+
+	/**
+		System call to get a timeval struct containing the arrival of the last
+		packet.
+		@param tv Pointer to the timeval struct in which the info will be stored
+	*/
+	void getArrivalOfLastPacket(struct timeval *tv){
+		ioctl(_socket, SIOCGSTAMP, tv);
 	};
 
 	/**

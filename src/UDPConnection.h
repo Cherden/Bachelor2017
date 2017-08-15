@@ -5,14 +5,12 @@
 
 class UDPConnection: public Connection{
 public:
-	static int next_port;
-
-public:
 
 	UDPConnection() : Connection(){};
 	UDPConnection(int port);
 
 	int bind2();
+	int getPort(){ return _port; };
 
 	/**
 		Inherited from Connection.
@@ -22,7 +20,7 @@ public:
 	void sendData(const void* buffer, size_t buffer_size);
 	void recvData(void* buffer, size_t buffer_size);
 
-private:	
+private:
 	int _port;
 	std::string _ip_address;
 };
