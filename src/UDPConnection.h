@@ -10,6 +10,12 @@ public:
 	UDPConnection(int port);
 
 	int getPort(){ return _port; };
+	void setInfo(struct sockaddr_in* info){
+		std::memcpy(&_info, info, sizeof(struct sockaddr_in));
+		if (_port != 0){
+			_info.sin_port = htons(_port);
+		}
+	};
 
 	/**
 		Inherited from Connection.
