@@ -58,41 +58,37 @@ int UDPConnection::createConnection(ConnectionType type, int port, string ip_add
 }
 
 void UDPConnection::sendData(const void *buffer, size_t buffer_size){
-	while(remain > 0){
-		if (_socket){
-			if ( sendto(_socket, (void*) to_send, len, 0
-				, (struct sockaddr *) &_info, sizeof(_info)) < 0){
-				LOG_ERROR << "failed to send data " << strerror(errno) << endl;
-				return;
-			}
-		} else {
-			LOG_ERROR << "failed to send data because the socket is closed"
-				<< endl;
+	if (_socket){
+		if ( sendto(_socket, (void*) buffer, buffer_size, 0
+			, (struct sockaddr *) &_info, sizeof(_info)) < 0){
+			LOG_ERROR << "failed to send data " << strerror(errno) << endl;
 			return;
 		}
+	} else {
+		LOG_ERROR << "failed to send data because the socket is closed"
+			<< endl;
+		return;
 	}
 
 	LOG_DEBUG << "sent udp packet, socket: " << _socket << " address: "
-		<< inet_ntoa(server.sin_addr) << " port: " << _port << endl;
+		<< inet_ntoa(_info.sin_addr) << " port: " << _port << endl;
 }
 
 void UDPConnection::recvData(void* buffer, size_t buffer_size){
 	struct sockaddr_in server;
 	socklen_t addrin_len = sizeof(server);
 
-	while(remain > 0){
-		if (_socket){
-			if (recvfrom(_socket, (void*) to_rcv, len, 0
-				, (struct sockaddr *) &server, &addrin_len) < 0){
-				LOG_ERROR << "failed to receive data " << strerror(errno)
-					<< endl;
-				return;
-			}
-		} else {
-			LOG_ERROR << "failed to send data because the socket is closed"
+	if (_socket){
+		if (recvfrom(_socket, (void*) buffer, buffer_size, 0
+			, (struct sockaddr *) &server, &addrin_len) < 0){
+			LOG_ERROR << "failed to receive data " << strerror(errno)
 				<< endl;
 			return;
 		}
+	} else {
+		LOG_ERROR << "failed to send data because the socket is closed"
+			<< endl;
+		return;
 	}
 
 	LOG_DEBUG << "received udp packet, socket: " << _socket << " address: "
