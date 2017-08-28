@@ -18,7 +18,7 @@ OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ)
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))
 OBJ_TEST_SERVER = 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestServer.o $(OBJ))
 OBJ_TEST_PIC	= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, TestPic.o $(OBJ))
-OBJ_TEST_TIMER	= 	obj/TestTimer.o
+OBJ_TEST_TIMER	= 	$(PROTO_OBJS) obj/UDPConnection.o obj/TimingClient.o obj/TestTimer.o
 
 
 
@@ -38,7 +38,7 @@ test_pic : $(OBJ_TEST_PIC)
 	$(CXX) $(CXX_VERSION) -o test_pic $(OBJ_TEST_PIC) $(LFLAGS) $(LIBS)
 
 test_timer : $(OBJ_TEST_TIMER)
-	$(CXX) $(CXX_VERSION) -o test_timer $(OBJ_TEST_TIMER) $(LFLAGS)
+	$(CXX) $(CXX_VERSION) -o test_timer $(OBJ_TEST_TIMER) $(LFLAGS) $(LIBS)
 
 proto : $(PROTO_OBJS)
 
@@ -54,4 +54,4 @@ $(OBJ_DIR)/%.pb.o : $(PROTO_DIR)/%.pb.cc
 
 
 clean:
-	\rm -f $(OBJ_DIR)/*.o $(PROTO_DIR)/*.pb.* server client test_kinect test_server test_pic
+	\rm -f $(OBJ_DIR)/*.o $(PROTO_DIR)/*.pb.* server client test_kinect test_server test_pic test_timer

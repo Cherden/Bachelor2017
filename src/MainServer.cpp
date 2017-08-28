@@ -47,7 +47,11 @@ void acceptClient(int* amount_clients){
 	struct sockaddr_in client_info = {};
 
 	TCPConnection con;
-	con.createConnection(SERVER, CONNECTION_PORT, "");
+	if (con.createConnection(SERVER, CONNECTION_PORT, "") < 0){
+		LOG_ERROR << "Failed to connect tcp socket" << endl;
+		running = false;
+		return;
+	}
 	con.setNonBlocking();
 
 	/*

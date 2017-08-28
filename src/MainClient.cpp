@@ -96,7 +96,7 @@ int main(){
 
 	m.ParseFromArray(buf, size);
 	UDPConnection udp_con(m.udp_port());
-	udp_con.createConnection(CLIENT, -1, NULL);
+	udp_con.createConnection(CLIENT, -1, "");
 	udp_con.setInfo(tcp_con.getInfo());
 
 #ifdef USE_POINT_CLOUD
