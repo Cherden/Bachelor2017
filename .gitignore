@@ -6,6 +6,7 @@ log.txt
 *.png
 test_kinect
 test_server
+test_timer
 server
 client
 gen/*.pb.*

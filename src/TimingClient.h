@@ -11,7 +11,7 @@ public:
 	~TimingClient();
 
 	void getTime(uint64_t* t);
-	void setTime(long time_offset);
+	void setTime(int64_t offset_sec, int64_t offset_usec);
 
 
 private:
