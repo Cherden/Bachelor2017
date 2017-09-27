@@ -106,15 +106,15 @@ void Client::_sendConnectionMessage(){
 	m.ParseFromArray(buf, size);
 
 	_use_point_cloud = m.use_point_cloud();
-	cout << "_use_point_cloud " << _use_point_cloud << endl;
+	//cout << "_use_point_cloud " << _use_point_cloud << endl;
 	_video_height = m.video_height();
-	cout << "_video_height " << _video_height << endl;
+	//cout << "_video_height " << _video_height << endl;
 	_video_width = m.video_width();
-	cout << "_video_width " << _video_width << endl;
+	//cout << "_video_width " << _video_width << endl;
 	_depth_height = m.depth_height();
-	cout << "_depth_height " << _depth_height << endl;
+	//cout << "_depth_height " << _depth_height << endl;
 	_depth_width = m.depth_width();
-	cout << "_depth_width " << _depth_width << endl;
+	//cout << "_depth_width " << _depth_width << endl;
 }
 
 void Client::_threadHandle(){

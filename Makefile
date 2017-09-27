@@ -3,8 +3,8 @@ PROTO_CC 		= 	protoc
 CXX_VERSION 	= 	-std=c++11
 CFLAGS 			= 	-Wall -c -g
 LFLAGS 			= 	-Wall -g -L/usr/local/lib/
-LIBS			=	-lprotobuf -lfreenect -lfreenect_sync -lpthread
-
+LIBS_LIGHT		=	-lprotobuf -lpthread
+LIBS			=	$(LIBS_LIGHT) -lfreenect -lfreenect_sync
 
 OBJ_DIR 		=	obj
 SRC_DIR 		=	src
@@ -12,8 +12,9 @@ PROTO_DIR 		= 	gen
 
 PROTO_OBJS		= 	$(patsubst $(PROTO_DIR)/%.proto, $(OBJ_DIR)/%.pb.o, $(wildcard $(PROTO_DIR)/*.proto))
 
-OBJ 			=	UDPConnection.o TCPConnection.o KinectWrapper.o
-OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o Client.o $(OBJ))
+OBJ_LIGHT		=	UDPConnection.o TCPConnection.o
+OBJ			=	$(OBJ_LIGHT) KinectWrapper.o
+OBJ_SERVER 		=	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainServer.o Client.o $(OBJ_LIGHT))
 OBJ_CLIENT		= 	$(PROTO_OBJS) $(patsubst %.o, $(OBJ_DIR)/%.o, MainClient.o $(OBJ))
 OBJ_TEST_KINECT	= 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestKinect.o $(OBJ))
 OBJ_TEST_SERVER = 	$(patsubst %.o, $(OBJ_DIR)/%.o, TestServer.o $(OBJ))
@@ -23,7 +24,7 @@ OBJ_TEST_TIMER	= 	$(PROTO_OBJS) obj/UDPConnection.o obj/TimingClient.o obj/TestT
 
 
 server : $(OBJ_SERVER)
-	$(CXX) $(CXX_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS) `pkg-config --libs --cflags opencv`
+	$(CXX) $(CXX_VERSION) -o server $(OBJ_SERVER) $(LFLAGS) $(LIBS_LIGHT) `pkg-config --libs --cflags opencv`
 
 client : $(OBJ_CLIENT)
 	$(CXX) $(CXX_VERSION) -o client $(OBJ_CLIENT) $(LFLAGS) $(LIBS)

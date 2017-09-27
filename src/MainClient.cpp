@@ -99,6 +99,7 @@ int main(){
 	udp_con.createConnection(CLIENT, -1, "");
 	udp_con.setInfo(tcp_con.getInfo());
 
+
 #ifdef USE_POINT_CLOUD
 	m.set_use_point_cloud(true);
 #else

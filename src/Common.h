@@ -6,4 +6,4 @@
 /**
 	Amount of clients the server can accept
 */
-#define MAX_CLIENTS 2
+#define MAX_CLIENTS 3

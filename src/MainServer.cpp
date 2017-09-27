@@ -21,6 +21,7 @@
 
 
 #define LOG_LEVEL DEBUG
+//#define SHOW_IMAGE
 
 
 using namespace std;
@@ -70,7 +71,7 @@ void acceptClient(int* amount_clients){
 					}
 				}
 
-				cout << '\r' << "Accepted client " << pos << ".." << endl;
+				cout << '\r' << "Client " << pos << " connected" << endl;
 				clients[pos] = new Client(tcp_socket, ++(UDPConnection::next_port));
 				clients[pos]->setInfo(&client_info);
 
@@ -89,7 +90,7 @@ int main(){
 	signal(SIGTERM, signalHandler);
 	signal(SIGQUIT, signalHandler);
 
-	cout << "Start accepting thread.." << endl;
+	cout << "Start accepting thread ..." << endl;
 
 	int amount_clients = 0;
 	thread accept_clients(acceptClient, &amount_clients);
@@ -98,13 +99,13 @@ int main(){
 	duration<double, std::milli> diff_time;
 	int frames[MAX_CLIENTS] = {0};
 
-	cout << "Waiting for clients.." << endl;
+	cout << "Waiting for clients ..." << endl;
 	while (running){
 		for (int i = 0; i < MAX_CLIENTS; i++){
 			if (clients[i] == NULL){
 				continue;
 			} else if (!clients[i]->isActive()){
-				cout << "\rClient " << i << " disconnected.." << endl;
+				cout << "\rClient " << i << " disconnected" << endl;
 				delete clients[i];
 				clients[i] = NULL;
 				amount_clients--;
@@ -119,6 +120,7 @@ int main(){
 				continue;
 			}
 
+#ifdef SHOW_IMAGE
 			Mat video_mat(Size(640, 480), CV_8UC3, video);
 			Mat depth_mat(Size(640, 480), CV_16UC1, depth);
 
@@ -126,11 +128,11 @@ int main(){
 			depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
 
 			imshow("rgb " + to_string(i), video_mat);
+			moveWindow("rgb " + to_string(i), i*640, 0);
  			imshow("depth " + to_string(i), depth_mat);
+			moveWindow("depth " + to_string(i), i*640, 500);
  			cvWaitKey(1);
-
-			//free(video);
-			//free(depth);
+#endif
 
 			frames[i]++;
 		}
