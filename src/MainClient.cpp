@@ -147,15 +147,21 @@ int main(){
 	double tsend_data_min = 2147483647;
 	double tsend_data_max = 0;
 	double tsend_data_avg = 0;
+
+	ofstream fget_data;
+	ofstream fset_data;
+	ofstream fserialize_data;
+	ofstream fsend_data;
+
+	fget_data.open("doc/get_data.txt");
+	fset_data.open("doc/set_data.txt");
+	fserialize_data.open("doc/serialize_data.txt");
+	fsend_data.open("doc/send_data.txt");
 #endif
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
-		if (tcp_con.isClosed()){
-			break;
-		}
-
 		total_start_time = high_resolution_clock::now();
 
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
@@ -255,6 +261,10 @@ int main(){
 			frames = 0;
 		}
 
+		if (tcp_con.isClosed()){
+			break;
+		}
+
 		cout << "\x1B[2J\x1B[H"		//clear screen
 			<< "Time to capture sensor data (ms): \n"
 				<< "\tACT = " << tget_data
@@ -277,11 +287,17 @@ int main(){
 				<< "\tMAX = " << tsend_data_max
 				<< "\tAVG = " << tsend_data_avg
 			<< "\nRunning at " << saved_frames << " FPS" << endl;
-#endif
 
-#ifdef PRINT_TIME_INFO
 		cout << "Total time for processing data "
 			<< tget_data + tset_data + tserialize_data + tsend_data << endl;
+
+		fget_data << tget_data  << endl;
+
+		fset_data << tset_data << endl;
+
+		fserialize_data << tserialize_data << endl;
+
+		fsend_data << tsend_data << endl;
 #endif
 
 		int fps_time = 30000;
@@ -295,6 +311,13 @@ int main(){
 	kinect.setLed(LED_BLINK_GREEN);
 	tcp_con.closeConnection();
 	udp_con.closeConnection();
+
+#ifdef PRINT_TIME_INFO
+	fget_data.close();
+	fset_data.close();
+	fserialize_data.close();
+	fsend_data.close();
+#endif
 
 	return 0;
 }

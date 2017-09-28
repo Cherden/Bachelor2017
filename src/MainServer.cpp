@@ -127,10 +127,10 @@ int main(){
 			cvtColor(video_mat, video_mat, CV_RGB2BGR);
 			depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
 
+			imshow("depth " + to_string(i), depth_mat);
+			moveWindow("depth " + to_string(i), i*640, 500);
 			imshow("rgb " + to_string(i), video_mat);
 			moveWindow("rgb " + to_string(i), i*640, 0);
- 			imshow("depth " + to_string(i), depth_mat);
-			moveWindow("depth " + to_string(i), i*640, 500);
  			cvWaitKey(1);
 #endif
 

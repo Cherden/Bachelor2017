@@ -2,7 +2,9 @@
 
 
 
-KinectWrapper::KinectWrapper(){}
+KinectWrapper::KinectWrapper(){
+	freenect_sync_set_tilt_degs(10, 0);
+}
 
 KinectWrapper::~KinectWrapper(){
     freenect_sync_stop();
