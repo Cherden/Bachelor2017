@@ -12,7 +12,14 @@ Client::Client(int tcp_socket, int udp_port)
 	, _data_available(0)
 	, _running(1)
 	, _data_mutex()
-	, _client_thread(&Client::_threadHandle, this) {}
+	, _client_thread(&Client::_threadHandle, this)
+	, _use_point_cloud(false)
+	, _video_height(0)
+	, _video_width(0)
+	, _depth_height(0)
+	, _depth_width(0)
+	, _message_size(0)
+	, _recv_buf(0) {}
 
 Client::~Client(){
 	_running = 0;
@@ -65,13 +72,11 @@ int Client::getData(char** video, char** depth, float** cloud){
 	return 0;
 }
 
-void Client::_handleFrameMessage(int len){
-	char* buf = (char*) malloc(len);
-
-	_tcp_con.recvData((void *) buf, len);
+void Client::_handleFrameMessage(){
+	_tcp_con.recvData((void *) _recv_buf, message_size);
 
 	_data_mutex.lock();
-	_sensor_data.ParseFromArray(buf, len);
+	_sensor_data.ParseFromArray(_recv_buf, message_size);
 
 	if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
@@ -81,8 +86,6 @@ void Client::_handleFrameMessage(int len){
 	}
 
 	_data_mutex.unlock();
-
-	free(buf);
 }
 
 void Client::_sendConnectionMessage(){
@@ -106,15 +109,13 @@ void Client::_sendConnectionMessage(){
 	m.ParseFromArray(buf, size);
 
 	_use_point_cloud = m.use_point_cloud();
-	//cout << "_use_point_cloud " << _use_point_cloud << endl;
 	_video_height = m.video_height();
-	//cout << "_video_height " << _video_height << endl;
 	_video_width = m.video_width();
-	//cout << "_video_width " << _video_width << endl;
 	_depth_height = m.depth_height();
-	//cout << "_depth_height " << _depth_height << endl;
 	_depth_width = m.depth_width();
-	//cout << "_depth_width " << _depth_width << endl;
+	
+	_message_size = m.message_size();	
+	_recv_buf = (char*) malloc(_message_size);
 }
 
 void Client::_threadHandle(){
@@ -130,12 +131,7 @@ void Client::_threadHandle(){
 			break;
 		}
 
-		_tcp_con.recvData((void*) &size, 4);
-		size = ntohl(size);
-
-		LOG_DEBUG << "next protobuf message size is " << size << endl;
-
-		_handleFrameMessage(size);
+		_handleFrameMessage();
 
 		_data_mutex.lock();
 		timestamp = _sensor_data.timestamp();

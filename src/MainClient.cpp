@@ -38,6 +38,12 @@ int main(){
 		kinect.setLed(LED_RED);
 		return -1;
 	}
+	
+	signal(SIGINT, signalHandler);
+	signal(SIGTERM, signalHandler);
+	signal(SIGQUIT, signalHandler);
+	
+	SET_LOG_LEVEL(LOG_LEVEL);
 
 	KinectWrapper kinect = KinectWrapper::getInstance();
 	kinect.setLed(LED_YELLOW);
@@ -56,12 +62,6 @@ int main(){
 
 	void* send_data = 0;
 
-	signal(SIGINT, signalHandler);
-	signal(SIGTERM, signalHandler);
-	signal(SIGQUIT, signalHandler);
-
-	SET_LOG_LEVEL(LOG_LEVEL);
-
 	int ret = 0;
 
 	/*
@@ -70,8 +70,7 @@ int main(){
 	*/
 	LOG_DEBUG << "handle usb handshake..." << endl;
 	cout << "Initialize Kincet.." << endl;
-	kinect.getData(VIDEO, &video_image);
-	kinect.getData(DEPTH, &depth_image);
+	kinect.handleUSBHandshake();
 
 	LOG_DEBUG << "try to create connection..." << endl;
 	cout << "Connect to server.." << endl;

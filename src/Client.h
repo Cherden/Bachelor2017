@@ -46,6 +46,9 @@ private:
 	int _video_width;
 	int _depth_height;
 	int _depth_width;
+	int _message_size;
+	
+	char* _recv_buf;
 };
 
 #endif

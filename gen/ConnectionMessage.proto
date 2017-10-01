@@ -2,7 +2,7 @@ syntax = "proto3";
 
 message ConnectionMessage {
 	// filled by server
-	uint32 udp_port = 1;
+	uint32 id = 1;
 
 	// filled by client
 	bool use_point_cloud = 2;
@@ -10,4 +10,5 @@ message ConnectionMessage {
 	uint32 video_width = 4;
 	uint32 depth_height = 5;
 	uint32 depth_width = 6;
+	uint32 message_size = 7;
 }

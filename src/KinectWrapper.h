@@ -63,6 +63,8 @@ public:
 		@param op The future state of the LED (see freenect_led_options above).
 	*/
 	void setLed(LedOption op);
+	
+	void handleUSBHandshake();
 
 	/**
 		Get a depth or video frame from a Microsoft Kinect using the C-Sync

@@ -1,5 +1,6 @@
 #include "KinectWrapper.h"
 
+#include <unistd.h>
 
 
 KinectWrapper::KinectWrapper(){
@@ -38,6 +39,16 @@ void KinectWrapper::convertToXYZPointCloud(KinectFrameMessage& message, uint16_t
 
 void KinectWrapper::setLed(LedOption op){
 	freenect_sync_set_led((freenect_led_options) op, 0);
+}
+
+void KinectWrapper::handleUSBHandshake(){
+	char* video_image;
+	char* depth_image;
+	
+	getData(VIDEO, &video_image);
+	getData(DEPTH, &depth_image);
+	
+	usleep(35000);
 }
 
 int KinectWrapper::getData(FrameInfo info, char** data){
