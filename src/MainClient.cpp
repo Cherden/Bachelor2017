@@ -20,9 +20,6 @@
 
 #define LOG_LEVEL DEBUG
 
-#define PRINT_TIME_INFO
-
-
 using namespace std;
 using namespace chrono;
 
@@ -36,14 +33,13 @@ void signalHandler(int signal){
 }
 
 int main(){
-	KinectWrapper kinect = KinectWrapper::getInstance();
-
 	if (getuid()){
 		cout << "You have to have root permission! Try sudo." << endl;
 		kinect.setLed(LED_RED);
 		return -1;
 	}
 
+	KinectWrapper kinect = KinectWrapper::getInstance();
 	kinect.setLed(LED_YELLOW);
 
 	char* video_image;
@@ -122,43 +118,6 @@ int main(){
 	duration<double, std::milli> diff_time;
 	time_t timestamp = 0;
 
-#ifdef PRINT_TIME_INFO
-	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
-	int frames = 0;
-	int saved_frames = 0;
-
-	double tget_data = 0;
-	double tget_data_min = 2147483647;
-	double tget_data_max = 0;
-	double tget_data_avg = 0;
-
-
-	double tset_data = 0;
-	double tset_data_min = 2147483647;
-	double tset_data_max = 0;
-	double tset_data_avg = 0;
-
-	double tserialize_data = 0;
-	double tserialize_data_min = 2147483647;
-	double tserialize_data_max = 0;
-	double tserialize_data_avg = 0;
-
-	double tsend_data = 0;
-	double tsend_data_min = 2147483647;
-	double tsend_data_max = 0;
-	double tsend_data_avg = 0;
-
-	ofstream fget_data;
-	ofstream fset_data;
-	ofstream fserialize_data;
-	ofstream fsend_data;
-
-	fget_data.open("doc/get_data.txt");
-	fset_data.open("doc/set_data.txt");
-	fserialize_data.open("doc/serialize_data.txt");
-	fsend_data.open("doc/send_data.txt");
-#endif
-
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
@@ -185,15 +144,6 @@ int main(){
 
 		timestamp = system_clock::to_time_t(end_time);
 
-#ifdef PRINT_TIME_INFO
-		tget_data = diff_time.count();
-		tget_data_min = tget_data < tget_data_min ? tget_data : tget_data_min;
-		tget_data_max = tget_data > tget_data_max ? tget_data : tget_data_max;
-		tget_data_avg = (tget_data_avg + tget_data) / 2;
-
-		start_time = high_resolution_clock::now();
-#endif
-
 		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
 		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
 
@@ -202,38 +152,12 @@ int main(){
 
 		frame_message.set_timestamp(timestamp);
 
-#ifdef PRINT_TIME_INFO
-		end_time = high_resolution_clock::now();
-		diff_time = end_time - start_time;
-
-		tset_data = diff_time.count();
-		tset_data_min = tset_data < tset_data_min ? tset_data : tset_data_min;
-		tset_data_max = tset_data > tset_data_max ? tset_data : tset_data_max;
-		tset_data_avg = (tset_data_avg + tset_data) / 2;
-
-		start_time = high_resolution_clock::now();
-#endif
-
 		uint32_t size = frame_message.ByteSize();
 		LOG_DEBUG << "serialized data size is " << size << endl;
 
 		frame_message.SerializeToString(&serialized_message);
 		frame_message.release_fvideo_data();
 		frame_message.release_fdepth_data();
-
-#ifdef PRINT_TIME_INFO
-		end_time = high_resolution_clock::now();
-		diff_time = end_time - start_time;
-
-		tserialize_data = diff_time.count();
-		tserialize_data_min = tserialize_data < tserialize_data_min
-			? tserialize_data : tserialize_data_min;
-		tserialize_data_max = tserialize_data > tserialize_data_max
-			? tserialize_data : tserialize_data_max;
-		tserialize_data_avg = (tserialize_data_avg + tserialize_data) / 2;
-
-		start_time = high_resolution_clock::now();
-#endif
 
 		uint32_t size_nw = htonl(size);
 		tcp_con.sendData((void*) &size_nw, 4);
@@ -242,63 +166,6 @@ int main(){
 		free(send_data);
 		frame_message.release_fvideo_data();
 		frame_message.release_fdepth_data();
-
-#ifdef PRINT_TIME_INFO
-		end_time = high_resolution_clock::now();
-		diff_time = end_time - start_time;
-
-		tsend_data = diff_time.count();
-		tsend_data_min = tsend_data < tsend_data_min ? tsend_data : tsend_data_min;
-		tsend_data_max = tsend_data > tsend_data_max ? tsend_data : tsend_data_max;
-		tsend_data_avg = (tsend_data_avg + tsend_data) / 2;
-
-		frames++;
-		diff_time = high_resolution_clock::now() - for_fps;
-		if (diff_time.count() >= 1000){
-			saved_frames = frames;
-
-			for_fps = high_resolution_clock::now();
-			frames = 0;
-		}
-
-		if (tcp_con.isClosed()){
-			break;
-		}
-
-		cout << "\x1B[2J\x1B[H"		//clear screen
-			<< "Time to capture sensor data (ms): \n"
-				<< "\tACT = " << tget_data
-				<< "\tMIN = " << tget_data_min
-				<< "\tMAX = " << tget_data_max
-				<< "\tAVG = " << tget_data_avg
-			<< "\nTime to put data in protobuf message (ms): \n"
-				<< "\tACT = " << tset_data
-				<< "\tMIN = " << tset_data_min
-				<< "\tMAX = " << tset_data_max
-				<< "\tAVG = " << tset_data_avg
-			<< "\nTime to serialize protobuf message (ms): \n"
-				<< "\tACT = " << tserialize_data
-				<< "\tMIN = " << tserialize_data_min
-				<< "\tMAX = " << tserialize_data_max
-				<< "\tAVG = " << tserialize_data_avg
-			<< "\nTime to send protobuf message (ms): \n"
-				<< "\tACT = " << tsend_data
-				<< "\tMIN = " << tsend_data_min
-				<< "\tMAX = " << tsend_data_max
-				<< "\tAVG = " << tsend_data_avg
-			<< "\nRunning at " << saved_frames << " FPS" << endl;
-
-		cout << "Total time for processing data "
-			<< tget_data + tset_data + tserialize_data + tsend_data << endl;
-
-		fget_data << tget_data  << endl;
-
-		fset_data << tset_data << endl;
-
-		fserialize_data << tserialize_data << endl;
-
-		fsend_data << tsend_data << endl;
-#endif
 
 		int fps_time = 30000;
 		diff_time = high_resolution_clock::now() - total_start_time;
@@ -311,13 +178,6 @@ int main(){
 	kinect.setLed(LED_BLINK_GREEN);
 	tcp_con.closeConnection();
 	udp_con.closeConnection();
-
-#ifdef PRINT_TIME_INFO
-	fget_data.close();
-	fset_data.close();
-	fserialize_data.close();
-	fsend_data.close();
-#endif
 
 	return 0;
 }
