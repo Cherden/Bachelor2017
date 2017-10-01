@@ -14,6 +14,7 @@ public:
 	Server();
 	
 	int connect();
+	void sendFrameMessage(KinectFrameMessage& kfm);
 
 	~Server();
 

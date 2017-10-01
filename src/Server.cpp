@@ -69,3 +69,14 @@ int Server::connect(){
 	
 	return id;
 }
+
+void Server::sendFrameMessage(KinectFrameMessage& kfm){
+	string serialized_message;
+	uint32_t size = kfm.ByteSize();
+
+	kfm.SerializeToString(&serialized_message);
+	kfm.release_fvideo_data();
+	kfm.release_fdepth_data();
+
+	_tcp_con.sendData((void*) serialized_message.c_str(), size);	
+}
