@@ -6,15 +6,17 @@
 #include "Common.h"
 
 #include "TCPConnection.h"
+#include "../gen/KinectFrameMessage.pb.h"
 
 using namespace std;
 
 class Server{
 public:
 	Server();
-	
+
 	int connect();
 	void sendFrameMessage(KinectFrameMessage& kfm);
+	int isClosed(){ return _tcp_con.isClosed(); };
 
 	~Server();
 

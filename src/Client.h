@@ -28,7 +28,7 @@ public:
 
 private:
 	void _threadHandle();
-	void _handleFrameMessage(int len);
+	void _handleFrameMessage();
 	void _sendConnectionMessage();
 
 	TCPConnection _tcp_con;
@@ -47,7 +47,7 @@ private:
 	int _depth_height;
 	int _depth_width;
 	int _message_size;
-	
+
 	char* _recv_buf;
 };
 

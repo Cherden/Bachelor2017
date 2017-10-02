@@ -11,6 +11,8 @@
 
 #include "../gen/KinectFrameMessage.pb.h"
 #include "KinectWrapper.h"
+#include "Server.h"
+#include "Sync.h"
 #include "Logger.h"
 
 
@@ -29,19 +31,20 @@ void signalHandler(int signal){
 }
 
 int main(){
+	KinectWrapper kinect = KinectWrapper::getInstance();
+
 	if (getuid()){
 		cout << "You have to have root permission! Try sudo." << endl;
 		kinect.setLed(LED_RED);
 		return -1;
 	}
-	
+
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
 	signal(SIGQUIT, signalHandler);
-	
+
 	SET_LOG_LEVEL(LOG_LEVEL);
 
-	KinectWrapper kinect = KinectWrapper::getInstance();
 	kinect.setLed(LED_YELLOW);
 
 	char* video_image;
@@ -54,6 +57,7 @@ int main(){
 	depth_string.resize(DEPTH_FRAME_MAX_SIZE);
 
   	KinectFrameMessage frame_message;
+	int id = 0;
 
 
 	/*
@@ -64,13 +68,13 @@ int main(){
 	cout << "Initialize Kincet.." << endl;
 	kinect.handleUSBHandshake();
 
-	Server server();
-	
+	Server server;
+
 	if ((id = server.connect()) == -1){
 		kinect.setLed(LED_RED);
 		return -1;
 	}
-	
+
 	Sync sync(id);
 
 	time_t timestamp = 0;
@@ -78,15 +82,17 @@ int main(){
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
-		total_start_time = high_resolution_clock::now();
-
+		if (server.isClosed()){
+			break;
+		}
+		
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
-		if ((ret = kinect.getData(VIDEO, &video_image)) != 0){
+		if (kinect.getData(VIDEO, &video_image) != 0){
 			LOG_WARNING << "could not receive video frame from kinect" << endl;
 			continue;
 		}
-		if ((ret = kinect.getData(DEPTH, &depth_image)) != 0){
+		if (kinect.getData(DEPTH, &depth_image) != 0){
 			LOG_WARNING << "could not receive depth frame from kinect" << endl;
 			continue;
 		}
@@ -96,7 +102,7 @@ int main(){
 #endif
 
 
-		timestamp = system_clock::to_time_t(end_time);
+		timestamp = system_clock::to_time_t(high_resolution_clock::now());
 
 		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
 		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);

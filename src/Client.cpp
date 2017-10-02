@@ -73,10 +73,10 @@ int Client::getData(char** video, char** depth, float** cloud){
 }
 
 void Client::_handleFrameMessage(){
-	_tcp_con.recvData((void *) _recv_buf, message_size);
+	_tcp_con.recvData((void *) _recv_buf, _message_size);
 
 	_data_mutex.lock();
-	_sensor_data.ParseFromArray(_recv_buf, message_size);
+	_sensor_data.ParseFromArray(_recv_buf, _message_size);
 
 	if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
@@ -92,7 +92,9 @@ void Client::_sendConnectionMessage(){
 	ConnectionMessage m;
 	string serialized_message;
 
-	m.set_udp_port(_udp_con.getPort());
+	// TODO workaround, fix later with own id
+	// TODO Client class may not need UDP object
+	m.set_id(_udp_con.getPort() - CONNECTION_PORT);
 	m.SerializeToString(&serialized_message);
 
 	uint32_t size = m.ByteSize();
@@ -113,13 +115,12 @@ void Client::_sendConnectionMessage(){
 	_video_width = m.video_width();
 	_depth_height = m.depth_height();
 	_depth_width = m.depth_width();
-	
-	_message_size = m.message_size();	
+
+	_message_size = m.message_size();
 	_recv_buf = (char*) malloc(_message_size);
 }
 
 void Client::_threadHandle(){
-	uint64_t size = 0;
 	int timestamp = 0;
 
 	_udp_con.createConnection(SERVER, -1, "");

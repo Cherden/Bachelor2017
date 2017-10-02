@@ -21,7 +21,7 @@
 
 
 #define LOG_LEVEL DEBUG
-#define SHOW_IMAGE
+//#define SHOW_IMAGE
 
 
 using namespace std;

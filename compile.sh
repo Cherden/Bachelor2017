@@ -16,17 +16,15 @@ compile () {
 	done
 }
 
-
-if [ -z "$name" ]
-then
-	echo "Copying and compiling for all."
-    copy_files 232 233 234
-    compile 232 233 234
-fi
-
-while getopts n: opt
+while getopts an: opt
 do
 	case $opt in
+		a)
+			echo "Copying and compiling for all."
+			copy_files 232 233 234
+			compile 232 233 234
+			break
+		;;
 		n)
 			echo "Copying and compiling one."
 			copy_files $OPTARG
