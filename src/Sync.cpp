@@ -1,6 +1,8 @@
 #include "Sync.h"
 
 #include <iostream>
+#include <unistd.h>
+#include <errno.h>
 
 #include "../gen/SyncMessage.pb.h"
 #include "Logger.h"
@@ -28,10 +30,12 @@ int Sync::connect(){
 
 	sm.set_type(SyncMessage_Type_ELECTION);
 	sm.set_leader(false);
+
 	_sendMessage(sm, BROADCAST_IP);
 
+	int ret = 0;
 	while (1){
-		if (_recvMessage(sm) != 0){
+		if ((ret = _recvMessage(sm)) == 1){
 			//timout
 			LOG_DEBUG << "Election timeout" << endl;
 			if (found_leader == 0){
@@ -39,7 +43,7 @@ int Sync::connect(){
 				LOG_DEBUG << "I am the new leader" << endl;
 			}
 			break;
-		} else {
+		} else if (ret == 0) {
 			// TODO save ips in list
 			LOG_DEBUG << "Received election message from "
 				<< _udp_con.getIPFromLastSender() << ", Leader = "
@@ -97,8 +101,9 @@ void Sync::_sendMessage(MessageLite& m, string ip){
 int Sync::_recvMessage(MessageLite& m){
 	char buffer[255] = {0};
 
-	if (_udp_con.recvData(buffer, 255) < 0){
-		return _udp_con.getLastErrno();
+	int ret = 0;
+	if ((ret = _udp_con.recvData(buffer, 255)) != 0){
+		return ret;
 	}
 
 	int msg_len = buffer[0];
@@ -136,7 +141,10 @@ void Sync::_threadHandle(){
 
 	while (_running){
 		// TODO implement message queue from sync to server
-		_recvMessage(sm);
+
+		if (_recvMessage(sm) != 0){
+			continue;
+		}
 
 		if (sm.type() == SyncMessage_Type_SYNC){
 

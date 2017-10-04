@@ -89,7 +89,7 @@ int main(){
 			break;
 		}
 
-		LOG_DEBUG << "trying to get frame from kinect" << endl;
+		//LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		if (kinect.getData(VIDEO, &video_image) != 0){
 			LOG_WARNING << "could not receive video frame from kinect" << endl;
@@ -107,15 +107,15 @@ int main(){
 
 		timestamp = system_clock::to_time_t(high_resolution_clock::now());
 
-		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
-		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+		//memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
+		//memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
 
-		frame_message.set_allocated_fvideo_data(&video_string);
-		frame_message.set_allocated_fdepth_data(&depth_string);
+		//frame_message.set_allocated_fvideo_data(&video_string);
+		//frame_message.set_allocated_fdepth_data(&depth_string);
 
 		frame_message.set_timestamp(timestamp);
 
-		server.sendFrameMessage(frame_message);
+		//server.sendFrameMessage(frame_message);
 	}
 
 	kinect.setLed(LED_BLINK_GREEN);

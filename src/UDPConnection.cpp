@@ -54,14 +54,12 @@ int UDPConnection::createConnection(ConnectionType type, int port, string ip){
 	   return -1;
 	}
 
-	struct sockaddr_in me;
+	memset((char *) &_info, 0, sizeof(_info));
+	_info.sin_family = AF_INET;
+	_info.sin_port = htons(_port);
+	_info.sin_addr.s_addr = INADDR_ANY;
 
-	memset((char *) &me, 0, sizeof(me));
-	me.sin_family = AF_INET;
-	me.sin_port = htons(_port);
-	me.sin_addr.s_addr = INADDR_ANY;
-
-	if (bind(_socket, (struct sockaddr*) &me, sizeof(me)) != 0){
+	if (bind(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 		_last_errno = errno;
 	   LOG_ERROR << "failed to bind socket " << strerror(errno) << endl;
 	   closeConnection();
@@ -75,7 +73,7 @@ int UDPConnection::createConnection(ConnectionType type, int port, string ip){
 }
 
 int UDPConnection::sendData(const void *buffer, size_t buffer_size, string ip){
-	inet_pton(AF_INET, ip.c_str(), &_info.sin_addr);
+	inet_pton(AF_INET, ip.c_str(), (void* )&(_info.sin_addr));
 
 	if (_socket){
 		if ( sendto(_socket, (void*) buffer, buffer_size, 0
@@ -84,12 +82,11 @@ int UDPConnection::sendData(const void *buffer, size_t buffer_size, string ip){
 			LOG_ERROR << "failed to send data " << strerror(errno) << endl;
 		} else {
 			LOG_DEBUG << "sent udp packet, socket: " << _socket << " address: "
-				<< inet_ntoa(_info.sin_addr) << " port: " << _port << endl;
+				<< ip << " port: " << _port << endl;
 			return 0;
 		}
 	} else {
-		LOG_ERROR << "failed to send data because the socket is closed"
-			<< endl;
+		LOG_ERROR << "failed to send data because the socket is closed"	<< endl;
 	}
 
 	return -1;
@@ -102,14 +99,22 @@ int UDPConnection::recvData(void* buffer, size_t buffer_size){
 	if (_socket){
 		if (recvfrom(_socket, (void*) buffer, buffer_size, 0
 			, (struct sockaddr *) &server, &addrin_len) < 0){
+			if (errno == EAGAIN){
+				return 1;
+			}
+
 			_last_errno = errno;
 			LOG_ERROR << "failed to receive data " << strerror(errno)
 				<< endl;
 		} else {
 			char ip[INET_ADDRSTRLEN];
-			inet_ntop(AF_INET, &(server.sin_addr), ip, INET_ADDRSTRLEN);
+			inet_ntop(AF_INET, (void *) &(server.sin_addr), ip, INET_ADDRSTRLEN);
 
-			_last_sender.assign(ip, INET_ADDRSTRLEN);
+			if (strcmp("127.0.0.1", ip) == 0){
+				return -1;
+			}
+
+			_last_sender.assign(ip, strlen(ip));
 			LOG_DEBUG << "received udp packet, socket: " << _socket << " address: "
 			 	<< _last_sender << " port: " << ntohs(server.sin_port)
 				<< endl;

@@ -16,6 +16,12 @@ compile () {
 	done
 }
 
+server () {
+	echo "Compile server ..."
+	make clean >> /dev/null 2>&1
+	make server >> /dev/null 2>&1
+}
+
 while getopts an: opt
 do
 	case $opt in
@@ -23,19 +29,17 @@ do
 			echo "Copying and compiling for all."
 			copy_files 232 233 234
 			compile 232 233 234
+			server
 			break
 		;;
 		n)
 			echo "Copying and compiling one."
 			copy_files $OPTARG
 			compile $OPTARG
+			server
 			break
 		;;
 	esac
 done
-
-echo "Compile server ..."
-make clean >> /dev/null 2>&1
-make server >> /dev/null 2>&1
 
 echo "Done."
