@@ -14,7 +14,7 @@ class Server{
 public:
 	Server();
 
-	int connect();
+	int connect(int is_leader);
 	void sendFrameMessage(KinectFrameMessage& kfm);
 	int isClosed(){ return _tcp_con.isClosed(); };
 

@@ -72,7 +72,7 @@ void acceptClient(int* amount_clients){
 				}
 
 				cout << '\r' << "Client " << pos << " connected" << endl;
-				clients[pos] = new Client(tcp_socket, ++(UDPConnection::next_port));
+				clients[pos] = new Client(pos, tcp_socket, ++(UDPConnection::next_port));
 				clients[pos]->setInfo(&client_info);
 
 				(*amount_clients)++;

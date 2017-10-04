@@ -24,14 +24,14 @@ public:
 		@return Socket of the accepted client on success, -1 otherwise.
 	*/
 	int acceptConnection(struct sockaddr_in* new_client);
-	
+
 
 	/**
 		Inherited from Connection.
 	*/
-	int createConnection(ConnectionType type, int port, std::string ip_address);
-	void sendData(const void* buffer, size_t buffer_size);
-	void recvData(void* buffer, size_t buffer_size);
+	int createConnection(ConnectionType type, int port, std::string ip);
+	int sendData(const void* buffer, size_t buffer_size, std::string ip);
+	int recvData(void* buffer, size_t buffer_size);
 };
 
 #endif

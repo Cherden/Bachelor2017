@@ -5,7 +5,9 @@
 #include "Logger.h"
 #include "../gen/ConnectionMessage.pb.h"
 
-Client::Client(int tcp_socket, int udp_port)
+int Client::leader_id = -1;
+
+Client::Client(int id, int tcp_socket, int udp_port)
 	: _tcp_con(tcp_socket)
 	, _udp_con(udp_port)
 	, _sensor_data()
@@ -19,7 +21,8 @@ Client::Client(int tcp_socket, int udp_port)
 	, _depth_height(0)
 	, _depth_width(0)
 	, _message_size(0)
-	, _recv_buf(0) {}
+	, _recv_buf(0)
+	, _id(id) {}
 
 Client::~Client(){
 	_running = 0;
@@ -88,19 +91,10 @@ void Client::_handleFrameMessage(){
 	_data_mutex.unlock();
 }
 
-void Client::_sendConnectionMessage(){
+void Client::_recvConnectionMessage(){
 	ConnectionMessage m;
-	string serialized_message;
-
-	// TODO workaround, fix later with own id
-	// TODO Client class may not need UDP object
-	m.set_id(_udp_con.getPort() - CONNECTION_PORT);
-	m.SerializeToString(&serialized_message);
-
-	uint32_t size = m.ByteSize();
-	uint32_t size_nw = htonl(size);
-	_tcp_con.sendData((void*) &size_nw, 4);
-	_tcp_con.sendData((void*) serialized_message.c_str(), size);
+	uint32_t size = 0;
+	uint32_t size_nw = 0;
 
 	_tcp_con.recvData((void*) &size_nw, 4);
 
@@ -116,6 +110,10 @@ void Client::_sendConnectionMessage(){
 	_depth_height = m.depth_height();
 	_depth_width = m.depth_width();
 
+	if (m.is_leader()){
+		Client::leader_id = _id;
+	}
+
 	_message_size = m.message_size();
 	_recv_buf = (char*) malloc(_message_size);
 }
@@ -124,7 +122,7 @@ void Client::_threadHandle(){
 	int timestamp = 0;
 
 	_udp_con.createConnection(SERVER, -1, "");
-	_sendConnectionMessage();
+	_recvConnectionMessage();
 
 	while (_running){
 		if (_tcp_con.isClosed()){

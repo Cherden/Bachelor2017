@@ -18,7 +18,7 @@ TCPConnection::TCPConnection(int socket){
 	LOG_DEBUG << "created tcp connection object with socket " << socket << endl;
 }
 
-int TCPConnection::createConnection(ConnectionType type, int port, string ip_address){
+int TCPConnection::createConnection(ConnectionType type, int port, string ip){
 	if (_type != UNDEFINED){
 		return -1;
 	}
@@ -60,7 +60,7 @@ int TCPConnection::createConnection(ConnectionType type, int port, string ip_add
 		LOG_DEBUG << "server socket succesfully created, listening " << _socket
 			<< endl;
 	} else if (_type == CLIENT){
-		inet_aton(ip_address.c_str(), &_info.sin_addr);
+		inet_pton(AF_INET, ip.c_str(), &_info.sin_addr);
 
 		if (connect(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 			LOG_ERROR << "failed to connect to server, strerror : "
@@ -102,7 +102,7 @@ int TCPConnection::acceptConnection(struct sockaddr_in* new_client){
 	return socket;
 }
 
-void TCPConnection::sendData(const void* buffer, size_t buffer_size){
+int TCPConnection::sendData(const void* buffer, size_t buffer_size, std::string ip){
 	if (_socket){
 		if (send(_socket, buffer, buffer_size, MSG_NOSIGNAL) <= 0){
 			LOG_ERROR << "failed to send data (" << _socket << "), strerror : "
@@ -112,13 +112,15 @@ void TCPConnection::sendData(const void* buffer, size_t buffer_size){
 		} else {
 			LOG_DEBUG << "sent " << buffer_size << " bytes, socket: "
 				<< _socket << endl;
+			return 0;
 		}
 	} else {
 		LOG_ERROR << "failed to send data because the socket closed" << endl;
 	}
+	return -1;
 }
 
-void TCPConnection::recvData(void* buffer, size_t buffer_size){
+int TCPConnection::recvData(void* buffer, size_t buffer_size){
 	int ret = 0;
 
 	if (_socket){
@@ -133,12 +135,14 @@ void TCPConnection::recvData(void* buffer, size_t buffer_size){
 		} else {
 			LOG_DEBUG <<"received " << ret << " bytes over socket " << _socket
 				<< endl;
+			return 0;
 		}
 
 
 	} else {
 		LOG_ERROR << "failed to receive data because the socket closed" << endl;
 	}
+	return -1;
 }
 
 /*int TCPConnection::_recvChunks(void* buffer, int buffer_size){

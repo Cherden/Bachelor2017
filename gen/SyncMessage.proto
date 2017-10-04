@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message SyncMessage {
+	enum Type {
+		ELECTION = 0;
+		SYNC = 1;
+	}
+
+	Type type = 1;
+
+	bool leader = 2;
+
+	//timing
+	uint64 sec = 3;
+	uint64 nsec = 4;
+}

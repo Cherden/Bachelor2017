@@ -16,7 +16,7 @@ Server::~Server(){
 	_tcp_con.closeConnection();
 }
 
-int Server::connect(){
+int Server::connect(int is_leader){
 	ConnectionMessage cm;
 	KinectFrameMessage kfm;
 	string serialized_message;
@@ -40,17 +40,6 @@ int Server::connect(){
 		return -1;
 	}
 
-	// receive size of connection message
-	_tcp_con.recvData((void *) &size_nw, 4);
-	size = ntohl(size_nw);
-
-	char* buf[size] = {0};
-	_tcp_con.recvData((void*) buf, size);
-
-	cm.ParseFromArray(buf, size);
-
-	id = cm.id();
-
 	cm.set_message_size(kfm.ByteSize());
 
 #ifdef USE_POINT_CLOUD
@@ -64,11 +53,15 @@ int Server::connect(){
 	cm.set_depth_height(DEPTH_FRAME_HEIGHT);
 	cm.set_depth_width(DEPTH_FRAME_WIDTH);
 
+	if (is_leader){
+		cm.set_is_leader(true);
+	}
+
 	cm.SerializeToString(&serialized_message);
 	size = cm.ByteSize();
 	size_nw = htonl(size);
-	_tcp_con.sendData((void*) &size_nw, 4);
-	_tcp_con.sendData((void*) serialized_message.c_str(), size);
+	_tcp_con.sendData((void*) &size_nw, 4, "");
+	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
 
 	return id;
 }
@@ -81,5 +74,5 @@ void Server::sendFrameMessage(KinectFrameMessage& kfm){
 	kfm.release_fvideo_data();
 	kfm.release_fdepth_data();
 
-	_tcp_con.sendData((void*) serialized_message.c_str(), size);
+	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
 }

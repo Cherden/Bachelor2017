@@ -41,7 +41,7 @@ public:
 		@return 0 on success, -1 otherwise.
 	*/
 	virtual int createConnection(ConnectionType type, int port
-		, std::string ip_address) = 0;
+		, std::string ip) = 0;
 
 	/**
 		Send data over _socket. On send() failure it logs the errno output
@@ -49,7 +49,7 @@ public:
 		@param buffer Pointer to the data buffer, which should be sent.
 		@param buffer_size The amount of data to be sent from buffer.
 	*/
-	virtual void sendData(const void* buffer, size_t buffer_size) = 0;
+	virtual int sendData(const void* buffer, size_t buffer_size, std::string ip) = 0;
 
 	//Header peekHeader();
 
@@ -61,7 +61,7 @@ public:
 		@param buffer_size The maximum amount of bytes to be written in the
 		buffer.
 	*/
-	virtual void recvData(void* buffer, size_t buffer_size) = 0;
+	virtual int recvData(void* buffer, size_t buffer_size) = 0;
 
 	/**
 		Check wether the socket is closed or not.

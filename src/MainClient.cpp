@@ -58,6 +58,7 @@ int main(){
 
   	KinectFrameMessage frame_message;
 	int id = 0;
+	int is_leader = 0;
 
 
 	/*
@@ -68,14 +69,16 @@ int main(){
 	cout << "Initialize Kincet.." << endl;
 	kinect.handleUSBHandshake();
 
+	Sync sync;
+	is_leader = sync.connect();
+
 	Server server;
 
-	if ((id = server.connect()) == -1){
+	if ((id = server.connect(is_leader)) == -1){
 		kinect.setLed(LED_RED);
 		return -1;
 	}
 
-	Sync sync(id);
 
 	time_t timestamp = 0;
 
@@ -85,7 +88,7 @@ int main(){
 		if (server.isClosed()){
 			break;
 		}
-		
+
 		LOG_DEBUG << "trying to get frame from kinect" << endl;
 
 		if (kinect.getData(VIDEO, &video_image) != 0){

@@ -1,6 +1,8 @@
 #ifndef _UDP_CONNECTION_H_
 #define _UDP_CONNECTION_H_
 
+#include <string>
+
 #include "Connection.h"
 
 class UDPConnection: public Connection{
@@ -17,15 +19,22 @@ public:
 		}
 	};
 
+	void enableBroadcast();
+	void setRecvTimout(int usec);
+	int getLastErrno() { return _last_errno; };
+	string getIPFromLastSender() { return _last_sender; };
+
 	/**
 		Inherited from Connection.
 	*/
-	int createConnection(ConnectionType type, int port, std::string ip_address);
-	void sendData(const void* buffer, size_t buffer_size);
-	void recvData(void* buffer, size_t buffer_size);
+	int createConnection(ConnectionType type, int port, std::string ip);
+	int sendData(const void* buffer, size_t buffer_size, std::string ip);
+	int recvData(void* buffer, size_t buffer_size);
 
 private:
 	int _port;
+	int _last_errno;
+	string _last_sender;
 };
 
 #endif

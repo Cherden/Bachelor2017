@@ -16,7 +16,9 @@ using namespace std;
 
 class Client{
 public:
-	Client(int tcp_socket, int udp_port);
+	static int leader_id;
+
+	Client(int id, int tcp_socket, int udp_port);
 
 	void setInfo(struct sockaddr_in* info);
 	int getData(char** video, char** depth, float** cloud);
@@ -29,7 +31,7 @@ public:
 private:
 	void _threadHandle();
 	void _handleFrameMessage();
-	void _sendConnectionMessage();
+	void _recvConnectionMessage();
 
 	TCPConnection _tcp_con;
 	UDPConnection _udp_con;
@@ -49,6 +51,7 @@ private:
 	int _message_size;
 
 	char* _recv_buf;
+	int _id;
 };
 
 #endif
