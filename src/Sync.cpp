@@ -33,9 +33,17 @@ int Sync::connect(){
 	while (1){
 		if (_recvMessage(sm) != 0){
 			//timout
+			LOG_DEBUG << "Election timeout" << endl;
+			if (found_leader == 0){
+				_is_leader = true;
+				LOG_DEBUG << "I am the new leader" << endl;
+			}
 			break;
 		} else {
 			// TODO save ips in list
+			LOG_DEBUG << "Received election message from "
+				<< _udp_con.getIPFromLastSender() << ", Leader = "
+				<< sm.leader() << endl;
 			if (sm.type() == SyncMessage_Type_ELECTION && sm.leader()){
 				found_leader = 1;
 			}
@@ -43,7 +51,6 @@ int Sync::connect(){
 	}
 
 	_running = true;
-	_is_leader = found_leader ? false : true;
 
 	return found_leader;
 }
