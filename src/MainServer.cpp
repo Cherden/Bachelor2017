@@ -95,9 +95,13 @@ int main(){
 	int amount_clients = 0;
 	thread accept_clients(acceptClient, &amount_clients);
 
-	high_resolution_clock::time_point for_fps = high_resolution_clock::now();
-	duration<double, std::milli> diff_time;
-	int frames[MAX_CLIENTS] = {0};
+	char* video = NULL;
+	char* depth = NULL;
+	float* cloud = NULL;
+
+	int video_size = 0;
+	int depth_size = 0;
+	int cloud_size = 0;
 
 	cout << "Waiting for clients ..." << endl;
 	while (running){
@@ -112,13 +116,19 @@ int main(){
 				continue;
 			}
 
-			char* video = NULL;
-			char* depth = NULL;
-			float* cloud = NULL;
-
-			if (clients[i]->getData(&video, &depth, &cloud)){
+			if ((video_size = clients[i]->getVideo(&video, video_size)) == -1){
 				continue;
 			}
+
+			if ((depth_size = clients[i]->getDepth(&depth, depth_size)) == -1){
+				continue;
+			}
+
+			if ((cloud_size = clients[i]->getCloud(&cloud, cloud_size)) == -1){
+				continue;
+			}
+
+			clients[i]->processedData();
 
 #ifdef SHOW_IMAGE
 			Mat video_mat(Size(640, 480), CV_8UC3, video);
@@ -133,29 +143,6 @@ int main(){
 			moveWindow("rgb " + to_string(i), i*640, 0);
  			cvWaitKey(1);
 #endif
-
-			frames[i]++;
-		}
-
-		diff_time = high_resolution_clock::now() - for_fps;
-		if (diff_time.count() >= 1000){
-			int counted_clients = 0;
-			int sum = 0;
-
-			for(int i = 0; i < MAX_CLIENTS; i++){
-				if (clients[i] != NULL && clients[i]->isActive()){
-					counted_clients++;
-					sum += frames[i];
-				}
-				frames[i] = 0;
-			}
-
-			if (counted_clients > 0){
-				cout << "\rRunning at " << sum/counted_clients << " FPS"
-					<< flush;
-			}
-
-			for_fps = high_resolution_clock::now();
 		}
 	}
 

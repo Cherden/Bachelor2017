@@ -21,7 +21,11 @@ public:
 	Client(int id, int tcp_socket, int udp_port);
 
 	void setInfo(struct sockaddr_in* info);
-	int getData(char** video, char** depth, float** cloud);
+	int getVideo(char** video, int size);
+	int getDepth(char** depth, int size);
+	int getCloud(float** cloud, int size);
+
+	void processedData() { _data_available = 0; };
 
 	int isActive(){ return _running; };
 

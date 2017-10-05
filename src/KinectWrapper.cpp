@@ -16,7 +16,7 @@ KinectWrapper KinectWrapper::getInstance(){
 	return kw;
 }
 
-void KinectWrapper::convertToXYZPointCloud(KinectFrameMessage& message, uint16_t* depth){
+/*void KinectWrapper::convertToXYZPointCloud(KinectFrameMessage& message, uint16_t* depth){
 	int step = 3;
 	float center_x = (float) (DEPTH_FRAME_WIDTH >> 1);
 	float center_y = (float) (DEPTH_FRAME_HEIGHT >> 1);
@@ -25,6 +25,8 @@ void KinectWrapper::convertToXYZPointCloud(KinectFrameMessage& message, uint16_t
 
 	int depth_idx = 0; //index for depth data array
 	int cloud_idx = 0; //index for pointcloud
+
+	message.clear_cloud();
 	for (int h = 0; h < DEPTH_FRAME_HEIGHT; h++){
 		for (int w = 0; w < DEPTH_FRAME_WIDTH; w++, cloud_idx += step){
 			float tmp = depth[depth_idx++] * 0.001f;
@@ -35,7 +37,7 @@ void KinectWrapper::convertToXYZPointCloud(KinectFrameMessage& message, uint16_t
 			message.add_cloud((h - center_y) * tmp);
 		}
 	}
-}
+}*/
 
 void KinectWrapper::setLed(LedOption op){
 	freenect_sync_set_led((freenect_led_options) op, 0);
@@ -44,10 +46,10 @@ void KinectWrapper::setLed(LedOption op){
 void KinectWrapper::handleUSBHandshake(){
 	char* video_image;
 	char* depth_image;
-	
+
 	getData(VIDEO, &video_image);
 	getData(DEPTH, &depth_image);
-	
+
 	usleep(35000);
 }
 

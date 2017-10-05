@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "Logger.h"
+#include "PCLUtil.h"
 #include "KinectWrapper.h"
 #include "../gen/ConnectionMessage.pb.h"
 
@@ -30,7 +31,14 @@ int Server::connect(int is_leader){
 	time_t timestamp = system_clock::to_time_t(high_resolution_clock::now());
 
 	kfm.set_fvideo_data((void*) video_buf, VIDEO_FRAME_MAX_SIZE);
+
+#if defined(USE_POINT_CLOUD) && defined(PROCESS_CLOUD_DISTRIBUTED)
+	PCLUtil::convertToXYZPointCloud(kfm, (uint16_t*) depth_buf
+		, DEPTH_FRAME_HEIGHT, DEPTH_FRAME_WIDTH);
+#else
 	kfm.set_fdepth_data((void*) depth_buf, DEPTH_FRAME_MAX_SIZE);
+#endif
+
 	kfm.set_timestamp(timestamp);
 
 	LOG_DEBUG << "try to create connection..." << endl;
@@ -40,6 +48,7 @@ int Server::connect(int is_leader){
 		return -1;
 	}
 
+	LOG_DEBUG << "KinectFrameMessage size = " << kfm.ByteSize() << endl;
 	cm.set_message_size(kfm.ByteSize());
 
 #ifdef USE_POINT_CLOUD
@@ -60,8 +69,11 @@ int Server::connect(int is_leader){
 	cm.SerializeToString(&serialized_message);
 	size = cm.ByteSize();
 	size_nw = htonl(size);
+
+	LOG_DEBUG << "send connect message" << endl;
 	_tcp_con.sendData((void*) &size_nw, 4, "");
 	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
+	LOG_DEBUG << "connect message sent" << endl;
 
 	return id;
 }

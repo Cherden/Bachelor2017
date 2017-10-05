@@ -14,6 +14,7 @@
 #include "Server.h"
 #include "Sync.h"
 #include "Logger.h"
+#include "PCLUtil.h"
 
 
 #define LOG_LEVEL DEBUG
@@ -100,22 +101,22 @@ int main(){
 			continue;
 		}
 
-#ifdef USE_POINT_CLOUD
-		KinectWrapper::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image);
-#endif
-
-
 		timestamp = system_clock::to_time_t(high_resolution_clock::now());
 
-		//memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
-		//memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
-
-		//frame_message.set_allocated_fvideo_data(&video_string);
-		//frame_message.set_allocated_fdepth_data(&depth_string);
+		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
+		frame_message.set_allocated_fvideo_data(&video_string);
 
 		frame_message.set_timestamp(timestamp);
 
-		//server.sendFrameMessage(frame_message);
+#if defined(USE_POINT_CLOUD) && defined(PROCESS_CLOUD_DISTRIBUTED)
+		PCLUtil::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image
+			, DEPTH_FRAME_HEIGHT, DEPTH_FRAME_WIDTH);
+#else
+		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+		frame_message.set_allocated_fdepth_data(&depth_string);
+#endif
+
+		server.sendFrameMessage(frame_message);
 	}
 
 	kinect.setLed(LED_BLINK_GREEN);

@@ -3,7 +3,9 @@
 #include <iostream>
 
 #include "Logger.h"
+#include "Common.h"
 #include "../gen/ConnectionMessage.pb.h"
+#include "PCLUtil.h"
 
 int Client::leader_id = -1;
 
@@ -36,7 +38,94 @@ void Client::setInfo(struct sockaddr_in* info){
 	_udp_con.setInfo(info);
 }
 
-int Client::getData(char** video, char** depth, float** cloud){
+int Client::getVideo(char** video, int size){
+	if (!_data_available){
+		return -2;
+	}
+
+	_data_mutex.lock();
+
+	int size_new = _sensor_data.fvideo_data().capacity();
+
+	if (size < size_new && size > 0){
+		free(*video);
+	}
+
+	if (*video == NULL){
+		*video = (char*) malloc(size_new);
+	}
+
+	memcpy(*video, _sensor_data.fvideo_data().c_str(), size_new);
+
+	_data_mutex.unlock();
+
+	return size_new;
+}
+
+int Client::getDepth(char** depth, int size){
+	if (_use_point_cloud){
+		return -1;
+	}
+
+	if (!_data_available){
+		return -2;
+	}
+
+	_data_mutex.lock();
+
+	int size_new = _sensor_data.fdepth_data().capacity();
+
+	if (size < size_new && size > 0){
+		free(*depth);
+	}
+
+	if (*depth == NULL){
+		*depth = (char*) malloc(size_new);
+	}
+
+	memcpy(*depth, _sensor_data.fdepth_data().c_str(), size_new);
+
+	_data_mutex.unlock();
+
+	return size_new;
+}
+
+int Client::getCloud(float** cloud, int size){
+	if (!_use_point_cloud){
+		return -1;
+	}
+
+	if (!_data_available){
+		return -2;
+	}
+
+	_data_mutex.lock();
+
+	int size_new = _sensor_data.cloud_size();
+
+	if (size != size_new && size > 0){
+		free(*cloud);
+	}
+
+	if (*cloud == NULL && size_new > 0){
+		*cloud = (float*) malloc(size_new * sizeof(float));
+	}
+
+#ifdef PROCESS_CLOUD_DISTRIBUTED
+	for (int i = 0; i < size_new; i++){
+		(*cloud)[i] = _sensor_data.cloud(i);
+	}
+#else
+	PCLUtil::convertToXYZPointCloud(*cloud, (uint16_t*) _sensor_data.fdepth_data().c_str(), _depth_height, _depth_width);
+	LOG_DEBUG << "Converted PCL on server" << endl;
+#endif
+
+	_data_mutex.unlock();
+
+	return size_new;
+}
+
+/*int Client::getData(char** video, char** depth, float** cloud){
 	if (!_data_available){
 		return -1;
 	}
@@ -58,10 +147,12 @@ int Client::getData(char** video, char** depth, float** cloud){
 		memcpy(*depth, _sensor_data.fdepth_data().c_str(), size);
 	} else if (_use_point_cloud){
 		if (*cloud == NULL){
-			*cloud = (float*) malloc(size * 3 * sizeof(float));
+			cout << "DEBUG malloc pointer with cloud size = " << _sensor_data.cloud_size() << endl;
+			*cloud = (float*) malloc(_sensor_data.cloud_size() * sizeof(float));
 		}
-		for (int i = 0; i < size * 3; i++){
-			*cloud[i] = _sensor_data.cloud(i);
+		cout << "DEBUG enter data with cloud size = " << _sensor_data.cloud_size() << endl;
+		for (int i = 0; i < _sensor_data.cloud_size(); i++){
+			(*cloud)[i] = _sensor_data.cloud(i);
 		}
 	} else {
 		_data_mutex.unlock();
@@ -73,7 +164,7 @@ int Client::getData(char** video, char** depth, float** cloud){
 	_data_mutex.unlock();
 
 	return 0;
-}
+}*/
 
 void Client::_handleFrameMessage(){
 	_tcp_con.recvData((void *) _recv_buf, _message_size);
