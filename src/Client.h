@@ -7,7 +7,6 @@
 
 #include "Common.h"
 
-#include "UDPConnection.h"
 #include "TCPConnection.h"
 
 #include "../gen/KinectFrameMessage.pb.h"
@@ -18,7 +17,7 @@ class Client{
 public:
 	static int leader_id;
 
-	Client(int id, int tcp_socket, int udp_port);
+	Client(int id, int tcp_socket);
 
 	void setInfo(struct sockaddr_in* info);
 	int getVideo(char** video, int size);
@@ -38,7 +37,6 @@ private:
 	void _recvConnectionMessage();
 
 	TCPConnection _tcp_con;
-	UDPConnection _udp_con;
 
 	KinectFrameMessage _sensor_data;
 	volatile int _data_available;

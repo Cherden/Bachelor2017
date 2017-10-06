@@ -23,7 +23,7 @@ public:
 		will be saved.
 		@return Socket of the accepted client on success, -1 otherwise.
 	*/
-	int acceptConnection(struct sockaddr_in* new_client);
+	int acceptConnection();
 
 
 	/**

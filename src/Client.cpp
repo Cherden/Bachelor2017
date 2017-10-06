@@ -9,9 +9,8 @@
 
 int Client::leader_id = -1;
 
-Client::Client(int id, int tcp_socket, int udp_port)
+Client::Client(int id, int tcp_socket)
 	: _tcp_con(tcp_socket)
-	, _udp_con(udp_port)
 	, _sensor_data()
 	, _data_available(0)
 	, _running(1)
@@ -29,13 +28,11 @@ Client::Client(int id, int tcp_socket, int udp_port)
 Client::~Client(){
 	_running = 0;
 	_tcp_con.closeConnection();
-	_udp_con.closeConnection();
 	_client_thread.join();
 }
 
 void Client::setInfo(struct sockaddr_in* info){
 	_tcp_con.setInfo(info);
-	_udp_con.setInfo(info);
 }
 
 int Client::getVideo(char** video, int size){
@@ -212,7 +209,6 @@ void Client::_recvConnectionMessage(){
 void Client::_threadHandle(){
 	int timestamp = 0;
 
-	_udp_con.createConnection(SERVER, -1, "");
 	_recvConnectionMessage();
 
 	while (_running){

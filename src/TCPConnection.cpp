@@ -77,7 +77,7 @@ int TCPConnection::createConnection(ConnectionType type, int port, string ip){
 	return 0;
 }
 
-int TCPConnection::acceptConnection(struct sockaddr_in* new_client){
+int TCPConnection::acceptConnection(){
 	if (_type != SERVER){
 		LOG_WARNING << "called acceptConnection() with non SERVER type" << endl;
 		return -1;
@@ -86,7 +86,7 @@ int TCPConnection::acceptConnection(struct sockaddr_in* new_client){
 	int socket = 0;
 	socklen_t client_size = sizeof(struct sockaddr_in);
 
-	if ((socket = accept(_socket, (struct sockaddr*) new_client
+	if ((socket = accept(_socket, (struct sockaddr*) &_info
 			, &client_size)) < 0){
 		if (!(errno == EAGAIN || errno == EWOULDBLOCK)){
 			LOG_WARNING << "accepting new client failed, strerror : "
