@@ -34,6 +34,9 @@ int main(){
 
 	cout << "Waiting for clients ..." << endl;
 	while (true){
+		cout << "Is able = " << api.isAbleToDeliverData() << endl;
+			cout << "client cunt = " << api.getClientCount() << endl;
+		usleep(50000);
 		if (api.isAbleToDeliverData()){
 			for(int i = 0; i < api.getClientCount(); i++){
 				Client* c = api.getClient(i);
@@ -41,6 +44,7 @@ int main(){
 				if ((video_size = c->getVideo(&video, video_size)) == -1){
 					continue;
 				}
+				cout << "Got video!!!" << endl;
 
 				/*if ((depth_size = c.getDepth(&depth, depth_size)) == -1){
 					continue;
@@ -51,6 +55,8 @@ int main(){
 				}
 
 				c->processedData();
+
+				cout << "Got cloud!!!" << endl;
 
 #ifdef SHOW_IMAGE
 				Mat video_mat(Size(640, 480), CV_8UC3, video);

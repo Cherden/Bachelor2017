@@ -5,7 +5,7 @@
 #include "TCPConnection.h"
 
 ServerAPI::ServerAPI()
-	: _able_to_deliver_data(false)
+	: _able_to_deliver_data(0)
 	, _running(true)
 	, _clients{}
 	, _clients_amount(0)
@@ -58,7 +58,8 @@ void ServerAPI::_acceptClients(){
 			if (!_clients[i]->isActive()){
 				LOG_WARNING << "Node " << i << " disconnected" << endl;
 				delete _clients[i];
-				_able_to_deliver_data = false;
+				_able_to_deliver_data = 0;
+				cout << "disconnect, reset is able" << endl;
 			}
 		}
 
@@ -76,7 +77,11 @@ void ServerAPI::_acceptClients(){
 				_clients[pos] = new Client(pos, tcp_socket);
 
 				if (++_clients_amount == MAX_CLIENTS){
-					_able_to_deliver_data = true;
+					cout << "Clientcount reached" << endl;
+					_able_to_deliver_data = 1;
+					cout << "Is Able debug = " << _able_to_deliver_data << endl;
+				} else {
+					cout << "_clients_amount = " << _clients_amount << endl;
 				}
 			}
 		}

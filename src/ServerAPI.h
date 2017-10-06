@@ -14,7 +14,7 @@ public:
 
 	int getClientCount() { return _clients_amount; };
 
-	bool isAbleToDeliverData() { return _able_to_deliver_data; };
+	int isAbleToDeliverData() { return _able_to_deliver_data; };
 
 	~ServerAPI();
 
@@ -23,7 +23,7 @@ private:
 	void _acceptClients();
 	void _startThread();
 
-	volatile bool _able_to_deliver_data;
+	volatile int _able_to_deliver_data;
 	volatile bool _running;
 	Client* _clients[MAX_CLIENTS];
 	volatile int _clients_amount;

@@ -114,7 +114,7 @@ int Client::getCloud(float** cloud, int size){
 	}
 #else
 	PCLUtil::convertToXYZPointCloud(*cloud, (uint16_t*) _sensor_data.fdepth_data().c_str(), _depth_height, _depth_width);
-	LOG_DEBUG << "Converted PCL on server" << endl;
+	cout << "Converted PCL on server" << endl;
 #endif
 
 	_data_mutex.unlock();
