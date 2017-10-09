@@ -6,7 +6,6 @@
 
 ServerAPI::ServerAPI()
 	: _all_clients_connected(false)
-	, _all_data_available(0)
 	, _running(true)
 	, _clients{}
 	, _clients_amount(0)
@@ -26,11 +25,16 @@ ServerAPI::~ServerAPI(){
 
 bool ServerAPI::isAbleToDeliverData(){
 	int check = 0;
+	int ref = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		check |= 1 << i;
+		ref |= 1 << i;
+
+		if (_clients[i] != NULL && _clients[i]->isActive()) {
+			check |= _clients[i]->isDataAvailable() << i;
+		}
 	}
 
-	return _all_clients_connected && (_all_data_available == check);
+	return _all_clients_connected && (ref == check);
 }
 
 Client* ServerAPI::getClient(int index){
@@ -63,8 +67,6 @@ void ServerAPI::_acceptClients(){
 
 				_clients_amount--;
 				_all_clients_connected = 0;
-			} else if (_clients[i] != NULL && _clients[i]->isActive()) {
-				_all_data_available |= _clients[i]->isDataAvailable() << i;
 			}
 		}
 

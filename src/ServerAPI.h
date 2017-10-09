@@ -25,7 +25,6 @@ private:
 	//void _startThread();
 
 	volatile bool _all_clients_connected;
-	volatile int _all_data_available;
 	volatile bool _running;
 	Client* _clients[MAX_CLIENTS];
 	volatile int _clients_amount;

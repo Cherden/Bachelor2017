@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 #include <time.h>
+#include <sys/time.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -22,6 +23,17 @@
 using namespace std;
 using namespace cv;
 
+void getTime(uint64_t* t){
+	//struct timespec tv;
+	struct timeval tv;
+
+	//clock_gettime(CLOCK_REALTIME, &tv);
+	gettimeofday(&tv, NULL);
+
+	t[0] = (uint64_t) tv.tv_sec;
+	t[1] = (uint64_t) tv.tv_usec;
+}
+
 int main(){
 	ServerAPI api;
 
@@ -32,6 +44,11 @@ int main(){
 	int video_size = 0;
 	//int depth_size = 0;
 	int cloud_size = 0;
+
+	uint64_t t[2] = {0};
+	uint64_t t_ref[2] = {0};
+	int frames = 0;
+	getTime(t_ref);
 
 	cout << "Waiting for clients ..." << endl;
 	while (true){
@@ -67,7 +84,18 @@ int main(){
 	 			cvWaitKey(1);
 #endif
 			}
+
+			frames++;
 		}
+
+		/*getTime(t);
+		if (t[0] - t_ref[0] >= 1){
+			getTime(t_ref);
+			cout << "\r" << frames << " FPS" << flush;
+			frames = 0;
+		}*/
+
+		usleep(500000);
 	}
 
 	return 0;
