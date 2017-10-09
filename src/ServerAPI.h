@@ -8,26 +8,28 @@
 
 class ServerAPI{
 public:
-	static ServerAPI getInstance();
+	//static ServerAPI getInstance();
+	ServerAPI();
 
 	Client* getClient(int index);
 
 	int getClientCount() { return _clients_amount; };
 
-	int isAbleToDeliverData() { return _able_to_deliver_data; };
+	bool isAbleToDeliverData();
 
 	~ServerAPI();
 
 private:
-	ServerAPI();
+	//ServerAPI();
 	void _acceptClients();
-	void _startThread();
+	//void _startThread();
 
-	volatile int _able_to_deliver_data;
+	volatile bool _all_clients_connected;
+	volatile int _all_data_available;
 	volatile bool _running;
 	Client* _clients[MAX_CLIENTS];
 	volatile int _clients_amount;
-	thread* _accept_clients_thread;
+	thread _accept_clients_thread;
 };
 
 #endif

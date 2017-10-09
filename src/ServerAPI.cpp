@@ -5,11 +5,12 @@
 #include "TCPConnection.h"
 
 ServerAPI::ServerAPI()
-	: _able_to_deliver_data(0)
+	: _all_clients_connected(false)
+	, _all_data_available(0)
 	, _running(true)
 	, _clients{}
 	, _clients_amount(0)
-	, _accept_clients_thread(0) {}
+	, _accept_clients_thread(&ServerAPI::_acceptClients, this) {}
 
 ServerAPI::~ServerAPI(){
 	_running = false;
@@ -20,26 +21,25 @@ ServerAPI::~ServerAPI(){
 		}
 	}
 
-	_accept_clients_thread->join();
-	delete _accept_clients_thread;
+	_accept_clients_thread.join();
 }
 
-ServerAPI ServerAPI::getInstance(){
-	static ServerAPI api;
-	api._startThread();
-	return api;
+bool ServerAPI::isAbleToDeliverData(){
+	int check = 0;
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		check |= 1 << i;
+	}
+
+	return _all_clients_connected && (_all_data_available == check);
 }
 
 Client* ServerAPI::getClient(int index){
 	if (index < 0 || index >= MAX_CLIENTS || _clients[index] == NULL){
+		cout << "error in " << index << endl;
 		throw std::invalid_argument("illegal index in getClient");
 	}
 
 	return (_clients[index]);
-}
-
-void ServerAPI::_startThread(){
-	_accept_clients_thread = new thread(&ServerAPI::_acceptClients, this);
 }
 
 void ServerAPI::_acceptClients(){
@@ -55,11 +55,16 @@ void ServerAPI::_acceptClients(){
 
 	while (_running){
 		for (int i = 0; i < _clients_amount; i++){
-			if (!_clients[i]->isActive()){
+			if (_clients[i] != NULL && !_clients[i]->isActive()){
 				LOG_WARNING << "Node " << i << " disconnected" << endl;
-				delete _clients[i];
-				_able_to_deliver_data = 0;
-				cout << "disconnect, reset is able" << endl;
+				if (_clients[i]){
+					delete _clients[i];
+				}
+
+				_clients_amount--;
+				_all_clients_connected = 0;
+			} else if (_clients[i] != NULL && _clients[i]->isActive()) {
+				_all_data_available |= _clients[i]->isDataAvailable() << i;
 			}
 		}
 
@@ -77,11 +82,7 @@ void ServerAPI::_acceptClients(){
 				_clients[pos] = new Client(pos, tcp_socket);
 
 				if (++_clients_amount == MAX_CLIENTS){
-					cout << "Clientcount reached" << endl;
-					_able_to_deliver_data = 1;
-					cout << "Is Able debug = " << _able_to_deliver_data << endl;
-				} else {
-					cout << "_clients_amount = " << _clients_amount << endl;
+					_all_clients_connected = 1;
 				}
 			}
 		}

@@ -37,7 +37,7 @@ void Client::setInfo(struct sockaddr_in* info){
 
 int Client::getVideo(char** video, int size){
 	if (!_data_available){
-		return -2;
+		return -1;
 	}
 
 	_data_mutex.lock();
@@ -61,11 +61,11 @@ int Client::getVideo(char** video, int size){
 
 int Client::getDepth(char** depth, int size){
 	if (_use_point_cloud){
-		return -1;
+		return -2;
 	}
 
 	if (!_data_available){
-		return -2;
+		return -1;
 	}
 
 	_data_mutex.lock();
@@ -98,7 +98,11 @@ int Client::getCloud(float** cloud, int size){
 
 	_data_mutex.lock();
 
+#ifdef PROCESS_CLOUD_DISTRIBUTED
 	int size_new = _sensor_data.cloud_size();
+#else
+	int size_new = _sensor_data.fdepth_data().capacity() * 3;
+#endif
 
 	if (size != size_new && size > 0){
 		free(*cloud);
@@ -114,7 +118,6 @@ int Client::getCloud(float** cloud, int size){
 	}
 #else
 	PCLUtil::convertToXYZPointCloud(*cloud, (uint16_t*) _sensor_data.fdepth_data().c_str(), _depth_height, _depth_width);
-	cout << "Converted PCL on server" << endl;
 #endif
 
 	_data_mutex.unlock();

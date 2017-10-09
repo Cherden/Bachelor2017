@@ -16,13 +16,14 @@
 
 
 #define LOG_LEVEL DEBUG
+#define SHOW_IMAGE
 
 
 using namespace std;
 using namespace cv;
 
 int main(){
-	ServerAPI api = ServerAPI::getInstance();
+	ServerAPI api;
 
 	char* video = NULL;
 	//char* depth = NULL;
@@ -34,9 +35,6 @@ int main(){
 
 	cout << "Waiting for clients ..." << endl;
 	while (true){
-		cout << "Is able = " << api.isAbleToDeliverData() << endl;
-			cout << "client cunt = " << api.getClientCount() << endl;
-		usleep(50000);
 		if (api.isAbleToDeliverData()){
 			for(int i = 0; i < api.getClientCount(); i++){
 				Client* c = api.getClient(i);
@@ -44,7 +42,6 @@ int main(){
 				if ((video_size = c->getVideo(&video, video_size)) == -1){
 					continue;
 				}
-				cout << "Got video!!!" << endl;
 
 				/*if ((depth_size = c.getDepth(&depth, depth_size)) == -1){
 					continue;
@@ -56,17 +53,15 @@ int main(){
 
 				c->processedData();
 
-				cout << "Got cloud!!!" << endl;
-
 #ifdef SHOW_IMAGE
 				Mat video_mat(Size(640, 480), CV_8UC3, video);
-				Mat depth_mat(Size(640, 480), CV_16UC1, depth);
+				//Mat depth_mat(Size(640, 480), CV_16UC1, depth);
 
 				cvtColor(video_mat, video_mat, CV_RGB2BGR);
-				depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
+				//depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
 
-				imshow("depth " + to_string(i), depth_mat);
-				moveWindow("depth " + to_string(i), i*640, 500);
+				//imshow("depth " + to_string(i), depth_mat);
+				//moveWindow("depth " + to_string(i), i*640, 500);
 				imshow("rgb " + to_string(i), video_mat);
 				moveWindow("rgb " + to_string(i), i*640, 0);
 	 			cvWaitKey(1);

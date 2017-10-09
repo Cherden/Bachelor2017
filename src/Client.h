@@ -26,6 +26,7 @@ public:
 
 	void processedData() { _data_available = 0; };
 
+	int isDataAvailable() { return _data_available; };
 	int isActive(){ return _running; };
 
 	~Client();
