@@ -3,6 +3,13 @@
 
 #include "../gen/KinectFrameMessage.pb.h"
 
+/**
+
+These utility functions are based on the Point Cloud Library (PCL)
+Thei function can be found here https://github.com/PointCloudLibrary/pcl/blob/46cb8fe5589e88e36d79f9b8b8e5f4ff4fceb5de/io/src/openni_grabber.cpp#L532
+
+*/
+
 class PCLUtil{
 public:
 	static void convertToXYZPointCloud(KinectFrameMessage& message, uint16_t* depth, int height, int width){

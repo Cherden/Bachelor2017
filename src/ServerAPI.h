@@ -8,7 +8,6 @@
 
 class ServerAPI{
 public:
-	//static ServerAPI getInstance();
 	ServerAPI();
 
 	Client* getClient(int index);
@@ -20,9 +19,7 @@ public:
 	~ServerAPI();
 
 private:
-	//ServerAPI();
 	void _acceptClients();
-	//void _startThread();
 
 	volatile bool _all_clients_connected;
 	volatile bool _running;
