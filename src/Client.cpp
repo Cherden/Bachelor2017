@@ -100,8 +100,10 @@ int Client::getCloud(float** cloud, int size){
 
 #ifdef PROCESS_CLOUD_DISTRIBUTED
 	int size_new = _sensor_data.cloud_size();
+	LOG_DEBUG << "processing cloud on server" << endl;
 #else
 	int size_new = _sensor_data.fdepth_data().capacity() * 3;
+	LOG_DEBUG << "rececived processed cloud" << endl;
 #endif
 
 	if (size != size_new && size > 0){
@@ -113,15 +115,18 @@ int Client::getCloud(float** cloud, int size){
 	}
 
 #ifdef PROCESS_CLOUD_DISTRIBUTED
+	LOG_DEBUG << "copying cloud" << endl;
 	for (int i = 0; i < size_new; i++){
 		(*cloud)[i] = _sensor_data.cloud(i);
 	}
 #else
+	LOG_DEBUG << "converting cloud" << endl;
 	PCLUtil::convertToXYZPointCloud(*cloud, (uint16_t*) _sensor_data.fdepth_data().c_str(), _depth_height, _depth_width);
 #endif
 
 	_data_mutex.unlock();
 
+	LOG_DEBUG << "returning cloud with size " << size_new << endl;
 	return size_new;
 }
 
