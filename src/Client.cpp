@@ -100,10 +100,10 @@ int Client::getCloud(float** cloud, int size){
 
 #ifdef PROCESS_CLOUD_DISTRIBUTED
 	int size_new = _sensor_data.cloud_size();
-	LOG_DEBUG << "processing cloud on server" << endl;
+	LOG_DEBUG << "rececived processed cloud" << endl;
 #else
 	int size_new = _sensor_data.fdepth_data().capacity() * 3;
-	LOG_DEBUG << "rececived processed cloud" << endl;
+	LOG_DEBUG << "processing cloud on server" << endl;
 #endif
 
 	if (size != size_new && size > 0){
@@ -111,7 +111,9 @@ int Client::getCloud(float** cloud, int size){
 	}
 
 	if (*cloud == NULL && size_new > 0){
+		LOG_DEBUG << "malloc cloud ptr with size " << size_new << endl;
 		*cloud = (float*) malloc(size_new * sizeof(float));
+		LOG_DEBUG << "malloc done" << endl;
 	}
 
 #ifdef PROCESS_CLOUD_DISTRIBUTED
