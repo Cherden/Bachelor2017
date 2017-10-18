@@ -16,30 +16,73 @@ compile () {
 	done
 }
 
+execute () {
+	for ip in $*
+	do
+		echo "Starting 192.168.1.$ip ..."
+		ssh -tCf odroid@192.168.1.$ip "cd /home/odroid/run && sudo ./client" # >> /dev/null 2>&1
+	done
+}
+
 server () {
 	echo "Compile server ..."
 	make clean >> /dev/null 2>&1
 	make server >> /dev/null 2>&1
 }
 
-while getopts an: opt
-do
-	case $opt in
-		a)
-			echo "Copying and compiling for all."
-			copy_files 232 233 234
-			compile 232 233 234
-			server
-			break
-		;;
-		n)
-			echo "Copying and compiling one."
-			copy_files $OPTARG
-			compile $OPTARG
-			server
-			break
-		;;
-	esac
-done
+usage () {
+	echo "test"
+}
+
+IP_LIST="232 233 234"
+SLEEP_TIME=23
+
+if [ $# -gt 0 ]; then
+	while [ "$1" != "" ]
+	do
+	    case $1 in
+	        -a | --all )
+						copy_files $IP_LIST
+						compile $IP_LIST
+						sleep $SLEEP_TIME
+						execute $IP_LIST
+						break
+          ;;
+
+					-c | --compile )
+						while [ "$2" != "" ] && ! [[ "$2" =~ '^[0-9]+$' ]]
+						do
+							copy_files $2
+							compile $2
+							sleep $SLEEP_TIME
+							shift
+						done
+						break
+					;;
+
+					-e | --execute )
+						while [ "$2" != "" ] && ! [[ "$2" = '^[0-9]+$' ]]
+						do
+							execute $2
+							shift
+						done
+						break
+					;;
+
+	        -h | --help )
+						usage
+            exit
+          ;;
+
+	        * )
+						usage
+            exit 1
+	    esac
+	    shift
+	done
+else
+	echo "No arguments given."
+fi
 
 echo "Done."
+exit

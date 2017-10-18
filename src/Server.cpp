@@ -1,6 +1,7 @@
 #include "Server.h"
 
 #include <iostream>
+#include <unistd.h>
 #include <chrono>
 
 #include "Logger.h"
@@ -42,10 +43,14 @@ int Server::connect(int is_leader){
 	kfm.set_timestamp(timestamp);
 
 	LOG_DEBUG << "try to create connection..." << endl;
-	cout << "Connect to server.." << endl;
-	if (_tcp_con.createConnection(CLIENT, CONNECTION_PORT, SERVER_IP) < 0){
-		cout << "Can not connect to server!" << endl;
-		return -1;
+	LOG_DEBUG << "Connect to server.." << endl;
+
+	while (1){
+		if (_tcp_con.createConnection(CLIENT, CONNECTION_PORT, SERVER_IP) >= 0){
+			LOG_DEBUG << "Connected!" << endl;
+			break;
+		}
+		usleep(10000);
 	}
 
 	LOG_DEBUG << "KinectFrameMessage size = " << kfm.ByteSize() << endl;
