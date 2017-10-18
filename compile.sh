@@ -45,7 +45,8 @@ if [ $# -gt 0 ]; then
 						copy_files $IP_LIST
 						compile $IP_LIST
 						sleep $SLEEP_TIME
-						execute $IP_LIST
+						server
+						# execute $IP_LIST
 						break
           ;;
 

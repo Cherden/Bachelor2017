@@ -45,12 +45,8 @@ int Server::connect(int is_leader){
 	LOG_DEBUG << "try to create connection..." << endl;
 	LOG_DEBUG << "Connect to server.." << endl;
 
-	while (1){
-		if (_tcp_con.createConnection(CLIENT, CONNECTION_PORT, SERVER_IP) >= 0){
-			LOG_DEBUG << "Connected!" << endl;
-			break;
-		}
-		usleep(10000);
+	if (_tcp_con.createConnection(CLIENT, CONNECTION_PORT, SERVER_IP) < 0){
+		LOG_ERROR << "Connection failed!" << endl;
 	}
 
 	LOG_DEBUG << "KinectFrameMessage size = " << kfm.ByteSize() << endl;
