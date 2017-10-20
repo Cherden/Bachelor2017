@@ -15,6 +15,7 @@
 #include "Sync.h"
 #include "Logger.h"
 #include "PCLUtil.h"
+//#include "ThreadQueue.h"
 
 
 #define LOG_LEVEL DEBUG
@@ -70,10 +71,12 @@ int main(){
 	cout << "Initialize Kincet.." << endl;
 	kinect.handleUSBHandshake();
 
+	//ThreadQueue queue;
+
 	Sync sync;
 	is_leader = sync.connect();
 
-	Server server;
+	Server server(&sync);
 
 	if ((id = server.connect(is_leader)) == -1){
 		kinect.setLed(LED_RED);

@@ -6,6 +6,7 @@
 
 #include "../gen/SyncMessage.pb.h"
 #include "Logger.h"
+#include "MessageCom.h"
 
 Sync::Sync()
 	: _udp_con(CONNECTION_PORT)
@@ -31,11 +32,11 @@ int Sync::connect(){
 	sm.set_type(SyncMessage_Type_ELECTION);
 	sm.set_leader(false);
 
-	_sendMessage(sm, BROADCAST_IP);
+	MessageCom::sendSmallMessage(sm, _udp_con, BROADCAST_IP);
 
 	int ret = 0;
 	while (1){
-		if ((ret = _recvMessage(sm)) == 1){
+		if ((ret = MessageCom::recvSmallMessage(sm, _udp_con)) == 1){
 			//timout
 			LOG_DEBUG << "Election timeout" << endl;
 			if (found_leader == 0){
@@ -82,38 +83,7 @@ void Sync::_setTime(int64_t offset_sec, int64_t offset_nsec){
 	}
 }
 
-void Sync::_sendMessage(MessageLite& m, string ip){
-	if (m.ByteSize() > 254){
-		LOG_WARNING << "serialized SyncMessage length exceeded 254 Bytes ("
-			<< m.ByteSize() << ")" << endl;
-		return;
-	}
-
-	char size = m.ByteSize();
-	char buffer[255] = {0};
-
-	m.SerializeToArray(&buffer[1], 254);
-	buffer[0] = size;
-
-	_udp_con.sendData(buffer, 255, ip);
-}
-
-int Sync::_recvMessage(MessageLite& m){
-	char buffer[255] = {0};
-
-	int ret = 0;
-	if ((ret = _udp_con.recvData(buffer, 255)) != 0){
-		return ret;
-	}
-
-	int msg_len = buffer[0];
-
-	m.ParseFromArray(&buffer[1], msg_len);
-
-	return 0;
-}
-
-void Sync::__berkleyAlgorithm(){
+int Sync::__berkleyAlgorithm(){
 	if (_is_leader){
 		//send broadcast
 
@@ -131,6 +101,19 @@ void Sync::__berkleyAlgorithm(){
 
 		// adjust time
 	}
+
+	//rtt
+	return 0;
+}
+
+void Sync::notifyNodes(){
+	if (!_is_leader){
+		return;
+	}
+	SyncMessage sm;
+
+	sm.set_type(SyncMessage_Type_READY);
+	MessageCom::sendSmallMessage(sm, _udp_con, BROADCAST_IP);
 }
 
 void Sync::_threadHandle(){
@@ -140,27 +123,19 @@ void Sync::_threadHandle(){
 	while (!_running);
 
 	while (_running){
-		// TODO implement message queue from sync to server
-
-		if (_recvMessage(sm) != 0){
+		if (MessageCom::recvSmallMessage(sm, _udp_con) != 0){
 			continue;
 		}
 
 		if (sm.type() == SyncMessage_Type_SYNC){
-
+			//sync
 		} else if (sm.type() == SyncMessage_Type_ELECTION) {
 			sm.set_type(SyncMessage_Type_ELECTION);
 			sm.set_leader(_is_leader);
-			_sendMessage(sm, _udp_con.getIPFromLastSender());
+			MessageCom::sendSmallMessage(sm, _udp_con, _udp_con.getIPFromLastSender());
 
 		} else if (sm.type() == SyncMessage_Type_READY) {
-			if (!_is_leader){
-				LOG_WARNING << "Non leader received READY message from server" << endl;
-				continue;
-			}
-
-			//__berkleyAlgorithm();
-			// notify send thread
+			// received ready from leader, notify main to capture and send data
 		} else {
 			LOG_WARNING << "Unknown SyncMessage type " << sm.type() << endl;
 		}

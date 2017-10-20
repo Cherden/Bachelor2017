@@ -8,11 +8,15 @@
 #include "PCLUtil.h"
 #include "KinectWrapper.h"
 #include "../gen/ConnectionMessage.pb.h"
+#include "../gen/SyncMessage.pb.h"
 
 using namespace chrono;
 
-Server::Server()
-	: _tcp_con() {}
+Server::Server(Sync* sync)
+	: _tcp_con()
+	, _running(false)
+	, _server_thread(&Server::_threadHandle, this)
+	, _sync(sync) {}
 
 Server::~Server(){
 	_tcp_con.closeConnection();
@@ -76,6 +80,8 @@ int Server::connect(int is_leader){
 	_tcp_con.sendData((void*) serialized_message.c_str(), size);
 	LOG_DEBUG << "connect message sent" << endl;
 
+	_running = true;
+
 	return id;
 }
 
@@ -88,4 +94,33 @@ void Server::sendFrameMessage(KinectFrameMessage& kfm){
 	kfm.release_fdepth_data();
 
 	_tcp_con.sendData((void*) serialized_message.c_str(), size);
+}
+
+void Server::_threadHandle(){
+	SyncMessage sm;
+	int rtt = 0;
+
+	//wait until instance is connected
+	while (!_running);
+
+	if (!_sync->isLeader()){
+		return;
+	}
+
+	//sync
+	_sync->__berkleyAlgorithm();
+
+	while (_running){
+		_tcp_con.recvData();
+
+		rtt = _sync->__berkleyAlgorithm();
+
+		_sync->notifyNodes();
+
+		usleep(rtt);
+
+		//notify client
+	}
+
+	LOG_DEBUG << "leaving _threadHandle" << endl;
 }
