@@ -20,7 +20,7 @@ execute () {
 	for ip in $*
 	do
 		echo "Starting 192.168.1.$ip ..."
-		ssh -tCf odroid@192.168.1.$ip "cd /home/odroid/run && sudo ./client" # >> /dev/null 2>&1
+		ssh -Cf odroid@192.168.1.$ip "cd /home/odroid/run && sudo ./client" >> /dev/null 2>&1
 	done
 }
 
@@ -31,7 +31,10 @@ server () {
 }
 
 usage () {
-	echo "test"
+	echo "Usage of compile.sh"
+	echo "\t-a\t| --all\t\t\tCompile all nodes and server."
+	echo "\t-c [n]\t| --compile\t\tCompile the nodes given after this parameter."
+	echo "\t-e [n] \t| --execute\t\tExecute the nodes given after this parameter."
 }
 
 IP_LIST="232 233 234"
@@ -44,8 +47,8 @@ if [ $# -gt 0 ]; then
 	        -a | --all )
 						copy_files $IP_LIST
 						compile $IP_LIST
-						sleep $SLEEP_TIME
 						server
+						sleep $SLEEP_TIME
 						# execute $IP_LIST
 						break
           ;;
@@ -55,13 +58,18 @@ if [ $# -gt 0 ]; then
 						do
 							copy_files $2
 							compile $2
-							sleep $SLEEP_TIME
 							shift
 						done
+						sleep $SLEEP_TIME
 						break
 					;;
 
 					-e | --execute )
+						if [ "$2" == "all" ];then
+							execute $IP_LIST
+							break
+						fi
+
 						while [ "$2" != "" ] && ! [[ "$2" = '^[0-9]+$' ]]
 						do
 							execute $2
@@ -82,8 +90,5 @@ if [ $# -gt 0 ]; then
 	    shift
 	done
 else
-	echo "No arguments given."
+	usage
 fi
-
-echo "Done."
-exit
