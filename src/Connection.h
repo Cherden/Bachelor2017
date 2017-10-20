@@ -49,7 +49,7 @@ public:
 		@param buffer Pointer to the data buffer, which should be sent.
 		@param buffer_size The amount of data to be sent from buffer.
 	*/
-	virtual int sendData(const void* buffer, size_t buffer_size, std::string ip) = 0;
+	virtual int sendData(const void* buffer, size_t buffer_size, std::string ip = "") = 0;
 
 	//Header peekHeader();
 

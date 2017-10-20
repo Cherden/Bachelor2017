@@ -30,7 +30,7 @@ public:
 		Inherited from Connection.
 	*/
 	int createConnection(ConnectionType type, int port, std::string ip);
-	int sendData(const void* buffer, size_t buffer_size, std::string ip);
+	int sendData(const void* buffer, size_t buffer_size, std::string ip = "");
 	int recvData(void* buffer, size_t buffer_size);
 };
 
