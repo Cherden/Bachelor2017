@@ -24,7 +24,7 @@ public:
 	int getDepth(char** depth, int size);
 	int getCloud(float** cloud, int size);
 
-	void processedData() { _data_available = 0; };
+	void processedData();
 
 	int isDataAvailable() { return _data_available; };
 	int isActive(){ return _running; };

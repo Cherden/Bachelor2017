@@ -5,6 +5,7 @@
 #include "Logger.h"
 #include "Common.h"
 #include "../gen/ConnectionMessage.pb.h"
+#include "../gen/SyncMessage.pb.h"
 #include "PCLUtil.h"
 
 int Client::leader_id = -1;
@@ -33,6 +34,23 @@ Client::~Client(){
 
 void Client::setInfo(struct sockaddr_in* info){
 	_tcp_con.setInfo(info);
+}
+
+void Client::processedData(){
+	_data_available = 0;
+
+	if (_id == Client::leader_id){
+		SyncMessage sync;
+		sync.set_type(SyncMessage_Type_READY);
+
+		char size = sync.ByteSize();
+		char buffer[255] = {0};
+
+		sync.SerializeToArray(&buffer[1], 254);
+		buffer[0] = size;
+
+		_tcp_con.sendData(buffer, 255);
+	}
 }
 
 int Client::getVideo(char** video, int size){

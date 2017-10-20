@@ -72,8 +72,8 @@ int Server::connect(int is_leader){
 	size_nw = htonl(size);
 
 	LOG_DEBUG << "send connect message" << endl;
-	_tcp_con.sendData((void*) &size_nw, 4, "");
-	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
+	_tcp_con.sendData((void*) &size_nw, 4);
+	_tcp_con.sendData((void*) serialized_message.c_str(), size);
 	LOG_DEBUG << "connect message sent" << endl;
 
 	return id;
@@ -87,5 +87,5 @@ void Server::sendFrameMessage(KinectFrameMessage& kfm){
 	kfm.release_fvideo_data();
 	kfm.release_fdepth_data();
 
-	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
+	_tcp_con.sendData((void*) serialized_message.c_str(), size);
 }

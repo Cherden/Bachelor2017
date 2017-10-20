@@ -152,11 +152,18 @@ void Sync::_threadHandle(){
 			sm.set_type(SyncMessage_Type_ELECTION);
 			sm.set_leader(_is_leader);
 			_sendMessage(sm, _udp_con.getIPFromLastSender());
+
+		} else if (sm.type() == SyncMessage_Type_READY) {
+			if (!_is_leader){
+				LOG_WARNING << "Non leader received READY message from server" << endl;
+				continue;
+			}
+
+			//__berkleyAlgorithm();
+			// notify send thread
 		} else {
 			LOG_WARNING << "Unknown SyncMessage type " << sm.type() << endl;
 		}
-
-		//__berkleyAlgorithm();
 	}
 
 	LOG_DEBUG << "leaving _threadHandle" << endl;
