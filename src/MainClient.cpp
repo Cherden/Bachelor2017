@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <signal.h>
+#include <condition_variable>
 
 #include "Common.h"
 
@@ -71,27 +72,29 @@ int main(){
 	cout << "Initialize Kincet.." << endl;
 	kinect.handleUSBHandshake();
 
-	//ThreadQueue queue;
+	condition_variable send_cond;
 
 	Sync sync;
 	is_leader = sync.connect();
 
-	Server server(&sync);
+	Server server(&sync, &send_cond);
 
 	if ((id = server.connect(is_leader)) == -1){
 		kinect.setLed(LED_RED);
 		return -1;
 	}
 
-
 	time_t timestamp = 0;
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
-		if (server.isClosed()){
-			break;
-		}
+		while (!server.canSend()) {
+			if (server.isClosed()){
+				break;
+			}
+            cond_var.wait(lock);
+        }
 
 		//LOG_DEBUG << "trying to get frame from kinect" << endl;
 
@@ -120,6 +123,8 @@ int main(){
 #endif
 
 		server.sendFrameMessage(frame_message);
+
+		server.haveSent();
 	}
 
 	kinect.setLed(LED_BLINK_GREEN);

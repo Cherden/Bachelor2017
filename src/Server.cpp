@@ -12,14 +12,17 @@
 
 using namespace chrono;
 
-Server::Server(Sync* sync)
+Server::Server(Sync* sync, condition_variable* send_cond)
 	: _tcp_con()
 	, _running(false)
 	, _server_thread(&Server::_threadHandle, this)
-	, _sync(sync) {}
+	, _sync(sync)
+	, _can_send(false)
+	, _send_cond(send_cond) {}
 
 Server::~Server(){
 	_tcp_con.closeConnection();
+	_send_cond.notify_all();
 }
 
 int Server::connect(int is_leader){
@@ -96,6 +99,7 @@ void Server::sendFrameMessage(KinectFrameMessage& kfm){
 	_tcp_con.sendData((void*) serialized_message.c_str(), size);
 }
 
+
 void Server::_threadHandle(){
 	SyncMessage sm;
 	int rtt = 0;
@@ -108,10 +112,14 @@ void Server::_threadHandle(){
 	}
 
 	//sync
-	_sync->__berkleyAlgorithm();
+	//_sync->__berkleyAlgorithm();
 
 	while (_running){
-		_tcp_con.recvData();
+		MessageCom::recvSmallMessage(sm, _tcp_con);
+
+		if (sm.type() != SyncMessage_Type_READY){
+			continue;
+		}
 
 		rtt = _sync->__berkleyAlgorithm();
 
@@ -120,6 +128,9 @@ void Server::_threadHandle(){
 		usleep(rtt);
 
 		//notify client
+
+		_can_send = true;
+		_send_cond->notify_one();
 	}
 
 	LOG_DEBUG << "leaving _threadHandle" << endl;
