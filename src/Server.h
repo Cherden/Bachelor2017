@@ -15,7 +15,7 @@ using namespace std;
 
 class Server{
 public:
-	Server(Sync* sync, condition_variable* send_cond);
+	Server(Sync* sync, condition_variable* send_cond, mutex* send_mutex);
 
 	int connect(int is_leader);
 	void sendFrameMessage(KinectFrameMessage& kfm);
@@ -35,6 +35,7 @@ private:
 
 	bool _can_send;
 	condition_variable* _send_cond;
+	mutex* _send_mutex;
 
 	void _threadHandle();
 };

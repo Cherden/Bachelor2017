@@ -72,12 +72,13 @@ int main(){
 	cout << "Initialize Kincet.." << endl;
 	kinect.handleUSBHandshake();
 
+	mutex send_mutex;
 	condition_variable send_cond;
 
 	Sync sync;
 	is_leader = sync.connect();
 
-	Server server(&sync, &send_cond);
+	Server server(&sync, &send_cond, &send_mutex);
 
 	if ((id = server.connect(is_leader)) == -1){
 		kinect.setLed(LED_RED);
@@ -89,11 +90,13 @@ int main(){
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
 	while(running){
+		unique_lock<mutex> lock(send_mutex);
+
 		while (!server.canSend()) {
 			if (server.isClosed()){
-				break;
+				running = false;
 			}
-            cond_var.wait(lock);
+            send_cond.wait(lock);
         }
 
 		//LOG_DEBUG << "trying to get frame from kinect" << endl;

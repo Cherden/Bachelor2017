@@ -47,13 +47,15 @@ public:
 
 		for (int h = 0; h < height; h++){
 			for (int w = 0; w < width; w++, cloud_idx += step){
-				uint16_t depth_value = (depth[depth_idx++]  << 8) | depth[depth_idx++];
+				uint16_t depth_value = (depth[depth_idx]  << 8) | depth[depth_idx + 1];
 				float tmp = depth_value * 0.001f;
 				cloud[cloud_idx] = tmp;
 
 				tmp = tmp * f_inv;
 				cloud[cloud_idx + 1] = (w - center_x) * tmp;
 				cloud[cloud_idx + 2] = (h - center_y) * tmp;
+
+				depth_idx += 2;
 			}
 		}
 	};

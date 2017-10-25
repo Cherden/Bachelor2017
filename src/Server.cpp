@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <chrono>
 
+#include "MessageCom.h"
 #include "Logger.h"
 #include "PCLUtil.h"
 #include "KinectWrapper.h"
@@ -12,17 +13,18 @@
 
 using namespace chrono;
 
-Server::Server(Sync* sync, condition_variable* send_cond)
+Server::Server(Sync* sync, condition_variable* send_cond, mutex* send_mutex)
 	: _tcp_con()
 	, _running(false)
 	, _server_thread(&Server::_threadHandle, this)
 	, _sync(sync)
 	, _can_send(false)
-	, _send_cond(send_cond) {}
+	, _send_cond(send_cond)
+	, _send_mutex(send_mutex) {}
 
 Server::~Server(){
 	_tcp_con.closeConnection();
-	_send_cond.notify_all();
+	_send_cond->notify_all();
 }
 
 int Server::connect(int is_leader){
@@ -115,6 +117,8 @@ void Server::_threadHandle(){
 	//_sync->__berkleyAlgorithm();
 
 	while (_running){
+		unique_lock<mutex> lock(*_send_mutex);
+
 		MessageCom::recvSmallMessage(sm, _tcp_con);
 
 		if (sm.type() != SyncMessage_Type_READY){
