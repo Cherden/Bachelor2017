@@ -34,6 +34,10 @@ bool ServerAPI::isAbleToDeliverData(){
 		}
 	}
 
+	if (_all_clients_connected && ref != check){
+		_clients[Client::leader_id]->triggerDataCapture();
+	}
+
 	return _all_clients_connected && (ref == check);
 }
 

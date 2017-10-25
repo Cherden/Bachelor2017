@@ -25,6 +25,7 @@ public:
 	int getCloud(float** cloud, int size);
 
 	void processedData();
+	void triggerDataCapture();
 
 	int isDataAvailable() { return _data_available; };
 	int isActive(){ return _running; };

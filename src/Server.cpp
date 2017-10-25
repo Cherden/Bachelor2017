@@ -56,6 +56,7 @@ int Server::connect(int is_leader){
 
 	if (_tcp_con.createConnection(CLIENT, CONNECTION_PORT, SERVER_IP) < 0){
 		LOG_ERROR << "Connection failed!" << endl;
+		return -1;
 	}
 
 	LOG_DEBUG << "KinectFrameMessage size = " << kfm.ByteSize() << endl;
@@ -119,7 +120,11 @@ void Server::_threadHandle(){
 	while (_running){
 		unique_lock<mutex> lock(*_send_mutex);
 
-		MessageCom::recvSmallMessage(sm, _tcp_con);
+		if (MessageCom::recvSmallMessage(sm, _tcp_con) < 0){
+			continue;
+		}
+
+		cout << "send state reached" << endl;
 
 		if (sm.type() != SyncMessage_Type_READY){
 			continue;

@@ -82,7 +82,7 @@ int main(){
 
 	if ((id = server.connect(is_leader)) == -1){
 		kinect.setLed(LED_RED);
-		return -1;
+		return 0;
 	}
 
 	time_t timestamp = 0;
@@ -95,9 +95,14 @@ int main(){
 		while (!server.canSend()) {
 			if (server.isClosed()){
 				running = false;
+				break;
 			}
-            send_cond.wait(lock);
-        }
+    	send_cond.wait(lock);
+    }
+
+		if (running == false){
+			break;
+		}
 
 		//LOG_DEBUG << "trying to get frame from kinect" << endl;
 

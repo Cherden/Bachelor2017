@@ -26,7 +26,7 @@ UDPConnection::UDPConnection(int port)
 	_info = {};
 	_last_sender.resize(INET_ADDRSTRLEN);
 
-	LOG_DEBUG << "created udp connection object with port " << port << endl;
+	LOG_DEBUG << "[UDP] created udp connection object with port " << port << endl;
 }
 
 void UDPConnection::enableBroadcast(){
@@ -50,7 +50,7 @@ int UDPConnection::createConnection(ConnectionType type, int port, string ip){
 	_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (_socket < 0){
 		_last_errno = errno;
-	   LOG_ERROR << "failed to create socket " << strerror(errno) << endl;
+	   LOG_ERROR << "[UDP] failed to create socket " << strerror(errno) << endl;
 	   return -1;
 	}
 
@@ -61,12 +61,12 @@ int UDPConnection::createConnection(ConnectionType type, int port, string ip){
 
 	if (bind(_socket, (struct sockaddr*) &_info, sizeof(_info)) != 0){
 		_last_errno = errno;
-	   LOG_ERROR << "failed to bind socket " << strerror(errno) << endl;
+	   LOG_ERROR << "[UDP] failed to bind socket " << strerror(errno) << endl;
 	   closeConnection();
 	   return -1;
 	}
 
-	LOG_DEBUG << "succesfully created and bound socket " << _socket
+	LOG_DEBUG << "[UDP] succesfully created and bound socket " << _socket
 	 	<< " port " << _port << endl;
 
 	return 0;
@@ -79,14 +79,14 @@ int UDPConnection::sendData(const void *buffer, size_t buffer_size, string ip){
 		if ( sendto(_socket, (void*) buffer, buffer_size, 0
 			, (struct sockaddr *) &_info, sizeof(_info)) < 0){
 			_last_errno = errno;
-			LOG_ERROR << "failed to send data " << strerror(errno) << endl;
+			LOG_ERROR << "[UDP] failed to send data " << strerror(errno) << endl;
 		} else {
-			LOG_DEBUG << "sent udp packet, socket: " << _socket << " address: "
+			LOG_DEBUG << "[UDP] sent udp packet, socket: " << _socket << " address: "
 				<< ip << " port: " << _port << endl;
 			return 0;
 		}
 	} else {
-		LOG_ERROR << "failed to send data because the socket is closed"	<< endl;
+		LOG_ERROR << "[UDP] failed to send data because the socket is closed"	<< endl;
 	}
 
 	return -1;
@@ -104,7 +104,7 @@ int UDPConnection::recvData(void* buffer, size_t buffer_size){
 			}
 
 			_last_errno = errno;
-			LOG_ERROR << "failed to receive data " << strerror(errno)
+			LOG_ERROR << "[UDP] failed to receive data " << strerror(errno)
 				<< endl;
 		} else {
 			char ip[INET_ADDRSTRLEN];
@@ -115,14 +115,14 @@ int UDPConnection::recvData(void* buffer, size_t buffer_size){
 			}
 
 			_last_sender.assign(ip, strlen(ip));
-			LOG_DEBUG << "received udp packet, socket: " << _socket << " address: "
+			LOG_DEBUG << "[UDP] received udp packet, socket: " << _socket << " address: "
 			 	<< _last_sender << " port: " << ntohs(server.sin_port)
 				<< endl;
 
 			return 0;
 		}
 	} else {
-		LOG_ERROR << "failed to send data because the socket is closed"	<< endl;
+		LOG_ERROR << "[UDP] failed to send data because the socket is closed"	<< endl;
 	}
 
 	return -1;

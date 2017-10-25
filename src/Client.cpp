@@ -40,17 +40,25 @@ void Client::processedData(){
 	_data_available = 0;
 
 	if (_id == Client::leader_id){
-		SyncMessage sync;
-		sync.set_type(SyncMessage_Type_READY);
-
-		char size = sync.ByteSize();
-		char buffer[255] = {0};
-
-		sync.SerializeToArray(&buffer[1], 254);
-		buffer[0] = size;
-
-		_tcp_con.sendData(buffer, 255);
+		triggerDataCapture();
 	}
+}
+
+void Client::triggerDataCapture(){
+	if (_id != Client::leader_id){
+		return;
+	}
+
+	SyncMessage sync;
+	sync.set_type(SyncMessage_Type_READY);
+
+	char size = sync.ByteSize();
+	char buffer[255] = {0};
+
+	sync.SerializeToArray(&buffer[1], 254);
+	buffer[0] = size;
+
+	_tcp_con.sendData(buffer, 255);	
 }
 
 int Client::getVideo(char** video, int size){
