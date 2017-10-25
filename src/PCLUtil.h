@@ -39,8 +39,8 @@ public:
 		int cloud_idx = 0; //index for pointcloud
 
 		for (int h = 0; h < height; h++){
-			for (int w = 0; w < width; w++, cloud_idx += step){
-				uint16_t depth_value = depth[depth_idx++] | (depth[depth_idx++] << 8);
+			for (int w = 0; w < width; w++, cloud_idx += step, depth_idx += 2){
+				uint16_t depth_value = depth[depth_idx] | (depth[depth_idx + 1] << 8);
 				float tmp = depth_value * 0.001f;
 				cloud[cloud_idx] = tmp;
 
