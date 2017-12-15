@@ -35,6 +35,15 @@ void Client::setInfo(struct sockaddr_in* info){
 	_tcp_con.setInfo(info);
 }
 
+uint64_t Client::getTimestamp(){
+	uint64_t ret = 0;
+	_data_mutex.lock();
+	ret = _sensor_data.timestamp();
+	_data_mutex.unlock();
+
+	return ret;
+}
+
 int Client::getVideo(char** video, int size){
 	if (!_data_available){
 		return -1;
@@ -180,12 +189,12 @@ void Client::_handleFrameMessage(){
 	_data_mutex.lock();
 	_sensor_data.ParseFromArray(_recv_buf, _message_size);
 
-	if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
+	/*if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
 			<< endl;
-	} else {
+	} else {*/
 		_data_available = 1;
-	}
+	//}
 
 	_data_mutex.unlock();
 }

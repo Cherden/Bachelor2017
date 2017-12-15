@@ -3,6 +3,6 @@ syntax = "proto3";
 message KinectFrameMessage {
 	bytes fvideo_data = 1;
 	bytes fdepth_data = 2;
-	uint32 timestamp = 3;
+	uint64 timestamp = 3;
 	repeated float cloud = 4;
 }

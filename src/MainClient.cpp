@@ -81,7 +81,8 @@ int main(){
 	}
 
 
-	time_t timestamp = 0;
+	uint64_t timestamp_arr[2] = {0};
+	uint64_t timestamp;
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
@@ -101,12 +102,15 @@ int main(){
 			continue;
 		}
 
-		timestamp = system_clock::to_time_t(high_resolution_clock::now());
+		//timestamp = system_clock::to_time_t(high_resolution_clock::now());
+
+		Sync::getTime(timestamp_arr);
+		timestamp = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
+		frame_message.set_timestamp(timestamp);
 
 		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
 		frame_message.set_allocated_fvideo_data(&video_string);
 
-		frame_message.set_timestamp(timestamp);
 
 #if defined(USE_POINT_CLOUD) && defined(PROCESS_CLOUD_DISTRIBUTED)
 		PCLUtil::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image

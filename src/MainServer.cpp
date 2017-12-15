@@ -9,7 +9,9 @@
 #include <unistd.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <algorithm>    // std::min max
 
+#include "Timer.h"
 #include "Common.h"
 
 #include "ServerAPI.h"
@@ -38,17 +40,22 @@ int main(){
 	ServerAPI api;
 
 	char* video = NULL;
-	//char* depth = NULL;
-	float* cloud = NULL;
+	char* depth = NULL;
+	//float* cloud = NULL;
+
+	uint64_t timestamp_arr[3] = {0};
 
 	int video_size = 0;
-	//int depth_size = 0;
-	int cloud_size = 0;
+	int depth_size = 0;
+	//int cloud_size = 0;
 
 	uint64_t t[2] = {0};
 	uint64_t t_ref[2] = {0};
 	int frames = 0;
 	getTime(t_ref);
+
+	ofstream f;
+	f.open("timer.txt");
 
 	cout << "Waiting for clients ..." << endl;
 	while (true){
@@ -56,17 +63,22 @@ int main(){
 			for(int i = 0; i < api.getClientCount(); i++){
 				Client* c = api.getClient(i);
 
-				if ((video_size = c->getVideo(&video, video_size)) == -1){
+				{
+					Timer timer(&f);
+					if ((video_size = c->getVideo(&video, video_size)) == -1){
+						continue;
+					}
+				}
+
+				if ((depth_size = c->getDepth(&depth, depth_size)) == -1){
 					continue;
 				}
 
-				/*if ((depth_size = c.getDepth(&depth, depth_size)) == -1){
+				timestamp_arr[i] = c->getTimestamp();
+
+				/*if ((cloud_size = c->getCloud(&cloud, cloud_size)) == -1){
 					continue;
 				}*/
-
-				if ((cloud_size = c->getCloud(&cloud, cloud_size)) == -1){
-					continue;
-				}
 
 				c->processedData();
 
@@ -86,7 +98,19 @@ int main(){
 			}
 
 			frames++;
+			uint64_t ts_max = 0;
+			uint64_t ts_min = 2147483647;
+			ts_min *= 1000;
+
+			for (int i = 0; i < api.getClientCount(); i++){
+				ts_max = max(ts_max, timestamp_arr[i]);
+				ts_min = min(ts_min, timestamp_arr[i]);
+			}
+
+			cout << "min=" << ts_min << " max=" << ts_max << " dif(ms)=" << ts_max-ts_min << endl;
 		}
+
+
 
 		getTime(t);
 		if (t[0] - t_ref[0] >= 1){
@@ -97,6 +121,8 @@ int main(){
 
 		//usleep(500000);
 	}
+
+	f.close();
 
 	return 0;
 }

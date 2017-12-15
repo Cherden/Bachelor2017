@@ -16,7 +16,7 @@ public:
 	Sync();
 
 	int connect();
-	void getTime(uint64_t* t);
+	static void getTime(uint64_t* t);
 	int isActive(){ return _running; };
 
 	~Sync();

@@ -26,7 +26,7 @@ typedef enum {
 typedef freenect_led_options LedOption;
 
 
-#define USE_POINT_CLOUD
+//#define USE_POINT_CLOUD
 
 /**
 	The size of data for one video frame

@@ -23,6 +23,7 @@ public:
 	int getVideo(char** video, int size);
 	int getDepth(char** depth, int size);
 	int getCloud(float** cloud, int size);
+	uint64_t getTimestamp();
 
 	void processedData() { _data_available = 0; };
 
