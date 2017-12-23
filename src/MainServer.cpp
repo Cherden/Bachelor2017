@@ -63,11 +63,8 @@ int main(){
 			for(int i = 0; i < api.getClientCount(); i++){
 				Client* c = api.getClient(i);
 
-				{
-					Timer timer(&f);
-					if ((video_size = c->getVideo(&video, video_size)) == -1){
-						continue;
-					}
+				if ((video_size = c->getVideo(&video, video_size)) == -1){
+					continue;
 				}
 
 				if ((depth_size = c->getDepth(&depth, depth_size)) == -1){
@@ -98,7 +95,7 @@ int main(){
 			}
 
 			frames++;
-			uint64_t ts_max = 0;
+/*			uint64_t ts_max = 0;
 			uint64_t ts_min = 2147483647;
 			ts_min *= 1000;
 
@@ -108,6 +105,7 @@ int main(){
 			}
 
 			cout << "min=" << ts_min << " max=" << ts_max << " dif(ms)=" << ts_max-ts_min << endl;
+*/
 		}
 
 

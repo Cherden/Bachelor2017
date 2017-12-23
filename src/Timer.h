@@ -1,8 +1,11 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 
-#include "Sync.h"
+#include "Common.h"
 
 using namespace std;
 
@@ -10,23 +13,18 @@ class Timer{
 public:
 	Timer(ofstream* file)
   : _file(file){
-
-  	uint64_t timestamp_arr[2] = {0};
-    Sync::getTime(timestamp_arr);
-		_ts = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
+		_ts = Common::getTime(NULL);
   };
 
 	~Timer(){
-    uint64_t timestamp_arr[2] = {0};
-    Sync::getTime(timestamp_arr);
-    uint64_t new_ts = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
+	 	double new_ts = Common::getTime(NULL);
 
-    *_file << new_ts - _ts << endl;
-  };
+    (*_file) << new_ts - _ts << endl;
+	};
 
 private:
 	ofstream* _file;
-  uint64_t _ts;
+  double _ts;
 };
 
 #endif

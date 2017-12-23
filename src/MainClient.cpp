@@ -15,9 +15,9 @@
 #include "Sync.h"
 #include "Logger.h"
 #include "PCLUtil.h"
+#include "Timer.h"
 
-
-#define LOG_LEVEL DEBUG
+#define LOG_LEVEL ERROR
 
 using namespace std;
 using namespace chrono;
@@ -80,50 +80,93 @@ int main(){
 		return -1;
 	}
 
+	ofstream f1;
+	f1.open("time/client_all_node_all.txt");
+
+	ofstream f2;
+	f2.open("time/client_all_node_obtain.txt");
+
+	ofstream f3;
+	f3.open("time/client_all_node_marshall.txt");
+
+	ofstream f4;
+	f4.open("time/client_all_node_send.txt");
 
 	uint64_t timestamp_arr[2] = {0};
 	uint64_t timestamp;
 
 	cout << "Sending data to server.." << endl;
 	kinect.setLed(LED_GREEN);
+
+	double start_time = Common::getTime(NULL);
+	double measure_time = 0.0;
+
+
 	while(running){
 		if (server.isClosed()){
 			break;
 		}
 
+		measure_time = Common::getTime(NULL);
 		//LOG_DEBUG << "trying to get frame from kinect" << endl;
 
-		if (kinect.getData(VIDEO, &video_image) != 0){
-			LOG_WARNING << "could not receive video frame from kinect" << endl;
-			continue;
+		{
+			Timer t1(&f1);
+
+			{
+				Timer t2 (&f2);
+				if (kinect.getData(VIDEO, &video_image) != 0){
+					LOG_WARNING << "could not receive video frame from kinect" << endl;
+					continue;
+				}
+				if (kinect.getData(DEPTH, &depth_image) != 0){
+					LOG_WARNING << "could not receive depth frame from kinect" << endl;
+					continue;
+				}
+			}
+			//timestamp = system_clock::to_time_t(high_resolution_clock::now());
+
+			{
+				Timer t3 (&f3);
+
+				Sync::getTime(timestamp_arr);
+				timestamp = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
+				frame_message.set_timestamp(timestamp);
+
+				memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
+				frame_message.set_allocated_fvideo_data(&video_string);
+
+
+		#if defined(USE_POINT_CLOUD) && defined(PROCESS_CLOUD_DISTRIBUTED)
+				PCLUtil::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image
+					, DEPTH_FRAME_HEIGHT, DEPTH_FRAME_WIDTH);
+		#else
+				memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
+				frame_message.set_allocated_fdepth_data(&depth_string);
+		#endif
+			}
+
+			{
+				Timer t4 (&f4);
+				server.sendFrameMessage(frame_message);
+			}
 		}
-		if (kinect.getData(DEPTH, &depth_image) != 0){
-			LOG_WARNING << "could not receive depth frame from kinect" << endl;
-			continue;
+
+		double end_time = Common::getTime(NULL);
+		if (end_time - start_time >= 180000){
+			break;
+		} else {
+			//cout << 33333 << " " << (end_time - measure_time) * 1000 << endl;
+			usleep(33333 - ((end_time - measure_time) * 1000));
 		}
-
-		//timestamp = system_clock::to_time_t(high_resolution_clock::now());
-
-		Sync::getTime(timestamp_arr);
-		timestamp = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
-		frame_message.set_timestamp(timestamp);
-
-		memcpy(&video_string[0], video_image, VIDEO_FRAME_MAX_SIZE);
-		frame_message.set_allocated_fvideo_data(&video_string);
-
-
-#if defined(USE_POINT_CLOUD) && defined(PROCESS_CLOUD_DISTRIBUTED)
-		PCLUtil::convertToXYZPointCloud(frame_message, (uint16_t*) depth_image
-			, DEPTH_FRAME_HEIGHT, DEPTH_FRAME_WIDTH);
-#else
-		memcpy(&depth_string[0], depth_image, DEPTH_FRAME_MAX_SIZE);
-		frame_message.set_allocated_fdepth_data(&depth_string);
-#endif
-
-		server.sendFrameMessage(frame_message);
 	}
 
 	kinect.setLed(LED_BLINK_GREEN);
+
+	f1.close();
+	f2.close();
+	f3.close();
+	f4.close();
 
 	return 0;
 }
