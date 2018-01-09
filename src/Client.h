@@ -24,6 +24,7 @@ public:
 	int getDepth(char** depth, int size);
 	int getCloud(float** cloud, int size);
 	uint64_t getTimestamp();
+	void sendTriggerMessage();
 
 	void processedData() { _data_available = 0; };
 

@@ -18,106 +18,90 @@
 #include "Client.h"
 
 
-#define LOG_LEVEL DEBUG
-#define SHOW_IMAGE
+#define LOG_LEVEL ERROR
+//#define SHOW_IMAGE
+#define SHOW_FPS
 
 
 using namespace std;
 using namespace cv;
 
-void getTime(uint64_t* t){
-	//struct timespec tv;
-	struct timeval tv;
-
-	//clock_gettime(CLOCK_REALTIME, &tv);
-	gettimeofday(&tv, NULL);
-
-	t[0] = (uint64_t) tv.tv_sec;
-	t[1] = (uint64_t) tv.tv_usec;
-}
 
 int main(){
 	ServerAPI api;
 
 	char* video = NULL;
 	char* depth = NULL;
-	//float* cloud = NULL;
+	float* cloud = NULL;
 
 	uint64_t timestamp_arr[3] = {0};
 
 	int video_size = 0;
 	int depth_size = 0;
-	//int cloud_size = 0;
+	int cloud_size = 0;
 
 	uint64_t t[2] = {0};
 	uint64_t t_ref[2] = {0};
 	int frames = 0;
-	getTime(t_ref);
-
-	ofstream f;
-	f.open("timer.txt");
+	Common::getTime(t_ref);
 
 	cout << "Waiting for clients ..." << endl;
+	while(!api.allClientsConnected()){};
+	cout << "All connected!" << endl;
+
+
+	ofstream f;
+	f.open("../all.txt");
+
 	while (true){
-		if (api.isAbleToDeliverData()){
-			for(int i = 0; i < api.getClientCount(); i++){
-				Client* c = api.getClient(i);
+		api.obtainNewData();
 
-				if ((video_size = c->getVideo(&video, video_size)) == -1){
-					continue;
-				}
+		while(!api.isAbleToDeliverData());
 
-				if ((depth_size = c->getDepth(&depth, depth_size)) == -1){
-					continue;
-				}
+		for(int i = 0; i < MAX_CLIENTS; i++){
 
-				timestamp_arr[i] = c->getTimestamp();
+			{
+//				Timer t(&f);
 
-				/*if ((cloud_size = c->getCloud(&cloud, cloud_size)) == -1){
-					continue;
-				}*/
+				video_size = api.getVideo(i, &video, video_size);
+				depth_size = api.getDepth(i, &depth, depth_size);
 
-				c->processedData();
+				timestamp_arr[i] = api.getTimestamp(i);
+
+				//cloud_size = api.getCloud(i, &cloud, cloud_size);
+			}
 
 #ifdef SHOW_IMAGE
-				Mat video_mat(Size(640, 480), CV_8UC3, video);
-				//Mat depth_mat(Size(640, 480), CV_16UC1, depth);
+			Mat video_mat(Size(640, 480), CV_8UC3, video);
+			//Mat depth_mat(Size(640, 480), CV_16UC1, depth);
 
-				cvtColor(video_mat, video_mat, CV_RGB2BGR);
-				//depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
+			cvtColor(video_mat, video_mat, CV_RGB2BGR);
+			//depth_mat.convertTo(depth_mat, CV_8UC1, 255.0/2048.0);
 
-				//imshow("depth " + to_string(i), depth_mat);
-				//moveWindow("depth " + to_string(i), i*640, 500);
-				imshow("rgb " + to_string(i), video_mat);
-				moveWindow("rgb " + to_string(i), i*640, 0);
-	 			cvWaitKey(1);
+			//imshow("depth " + to_string(i), depth_mat);
+			//moveWindow("depth " + to_string(i), i*640, 500);
+			imshow("rgb " + to_string(i), video_mat);
+			moveWindow("rgb " + to_string(i), i*640, 0);
+ 			cvWaitKey(1);
 #endif
-			}
-
-			frames++;
-/*			uint64_t ts_max = 0;
-			uint64_t ts_min = 2147483647;
-			ts_min *= 1000;
-
-			for (int i = 0; i < api.getClientCount(); i++){
-				ts_max = max(ts_max, timestamp_arr[i]);
-				ts_min = min(ts_min, timestamp_arr[i]);
-			}
-
-			cout << "min=" << ts_min << " max=" << ts_max << " dif(ms)=" << ts_max-ts_min << endl;
-*/
 		}
 
+		cout << "timestamp ms: " << timestamp_arr[0]<< " "<<timestamp_arr[1]<<" "<<timestamp_arr[2]<<endl;
+		cout << "timestamp difference " << Common::absMinMax(timestamp_arr[0], timestamp_arr[1], timestamp_arr[2])
+			<< endl;
 
 
-		getTime(t);
+
+#ifdef SHOW_FPS
+		frames++;
+
+		Common::getTime(t);
 		if (t[0] - t_ref[0] >= 1){
-			getTime(t_ref);
+			Common::getTime(t_ref);
 			cout << "\r" << frames << " FPS" << flush;
 			frames = 0;
 		}
-
-		//usleep(500000);
+#endif
 	}
 
 	f.close();

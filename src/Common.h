@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdlib.h>
 
 /**
 	Port used for communication from this program
@@ -33,6 +34,31 @@ public:
     }
 
     return ((double) tv.tv_sec * 1000000 + (double) tv.tv_usec) / 1000.0;
+  }
+
+  static uint64_t max(uint64_t a, uint64_t b, uint64_t c){
+	  if (a >= b && a >= c){
+		  return a;
+	  } else if (b >= a && b >= c){
+		  return b;
+	  } else if (c >= a && c >= b){
+	  	return c;
+	}
+  }
+
+  static uint64_t min(uint64_t a, uint64_t b, uint64_t c){
+	  if (a <= b && a <= c){
+		  return a;
+	  } else if (b <= a && b <= c){
+		  return b;
+	  } else if (c <= a && c <= b){
+	  	return c;
+	}
+  }
+
+  static uint64_t absMinMax(uint64_t a, uint64_t b, uint64_t c){
+	  uint64_t diff = Common::max(a, b, c) - Common::min(a, b, c);
+	  return diff < 0 ? diff * (-1) : diff;
   }
 };
 

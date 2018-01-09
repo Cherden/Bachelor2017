@@ -23,27 +23,68 @@ ServerAPI::~ServerAPI(){
 	_accept_clients_thread.join();
 }
 
-bool ServerAPI::isAbleToDeliverData(){
-	int check = 0;
-	int ref = 0;
+bool ServerAPI::allClientsConnected(){
 	for(int i = 0; i < MAX_CLIENTS; i++){
-		ref |= 1 << i;
-
-		if (_clients[i] != NULL && _clients[i]->isActive()) {
-			check |= _clients[i]->isDataAvailable() << i;
+		if (_clients[i] == NULL || !_clients[i]->isActive()) {
+			return false;
 		}
 	}
 
-	return _all_clients_connected && (ref == check);
+	return true;
 }
 
-Client* ServerAPI::getClient(int index){
-	if (index < 0 || index >= MAX_CLIENTS || _clients[index] == NULL){
-		cout << "error in " << index << endl;
-		throw std::invalid_argument("illegal index in getClient");
+void ServerAPI::obtainNewData(){
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		_clients[i]->processedData();
 	}
 
-	return (_clients[index]);
+	_clients[Client::leader_id]->sendTriggerMessage();
+}
+
+bool ServerAPI::isAbleToDeliverData(){
+	for(int i = 0; i < MAX_CLIENTS; i++){
+		if (_clients[i] == NULL ||  !_clients[i]->isDataAvailable()) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+uint64_t ServerAPI::getTimestamp(int sensor_id){
+	if (sensor_id < 0 || sensor_id >= MAX_CLIENTS || _clients[sensor_id] == NULL){
+		cout << "error in " << sensor_id << endl;
+		throw std::invalid_argument("illegal index in getTimestamp");
+	}
+
+	return (_clients[sensor_id])->getTimestamp();
+}
+
+int ServerAPI::getVideo(int sensor_id, char** buf, int size){
+	if (sensor_id < 0 || sensor_id >= MAX_CLIENTS || _clients[sensor_id] == NULL){
+		cout << "error in " << sensor_id << endl;
+		throw std::invalid_argument("illegal index in getVideo");
+	}
+
+	return (_clients[sensor_id])->getVideo(buf, size);
+}
+
+int ServerAPI::getDepth(int sensor_id, char** buf, int size){
+	if (sensor_id < 0 || sensor_id >= MAX_CLIENTS || _clients[sensor_id] == NULL){
+		cout << "error in " << sensor_id << endl;
+		throw std::invalid_argument("illegal index in getDepth");
+	}
+
+	return (_clients[sensor_id])->getDepth(buf, size);
+}
+
+int ServerAPI::getCloud(int sensor_id, float** buf, int size){
+	if (sensor_id < 0 || sensor_id >= MAX_CLIENTS || _clients[sensor_id] == NULL){
+		cout << "error in " << sensor_id << endl;
+		throw std::invalid_argument("illegal index in getCloud");
+	}
+
+	return (_clients[sensor_id])->getCloud(buf, size);
 }
 
 void ServerAPI::_acceptClients(){

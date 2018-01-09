@@ -122,7 +122,7 @@ int UDPConnection::recvData(void* buffer, size_t buffer_size){
 			return 0;
 		}
 	} else {
-		LOG_ERROR << "failed to send data because the socket is closed"	<< endl;
+		LOG_ERROR << "failed to receive data because the socket is closed"	<< endl;
 	}
 
 	return -1;

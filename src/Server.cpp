@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <chrono>
 
-#include "Sync.h"
 #include "Logger.h"
 #include "PCLUtil.h"
 #include "KinectWrapper.h"
@@ -12,10 +11,15 @@
 
 using namespace chrono;
 
-Server::Server()
-	: _tcp_con() {}
+Server::Server(NetworkCommunication* nc)
+	: _tcp_con()
+	, _running(false)
+	, _server_thread(NULL)
+	, _is_leader(false)
+	, _nc(nc) {}
 
 Server::~Server(){
+	_running = false;
 	_tcp_con.closeConnection();
 }
 
@@ -32,7 +36,7 @@ int Server::connect(int is_leader){
 	char video_buf[VIDEO_FRAME_MAX_SIZE] = {1};
 	char depth_buf[DEPTH_FRAME_MAX_SIZE] = {1};
 
-	Sync::getTime(timestamp_arr);
+	Common::getTime(timestamp_arr);
 	uint64_t timestamp = timestamp_arr[0] * 100 + timestamp_arr[1] / 100000;
 
 	kfm.set_fvideo_data((void*) video_buf, VIDEO_FRAME_MAX_SIZE);
@@ -69,6 +73,8 @@ int Server::connect(int is_leader){
 
 	if (is_leader){
 		cm.set_is_leader(true);
+		_running = true;
+		_server_thread = new thread(&Server::_threadHandle, this);
 	}
 
 	cm.SerializeToString(&serialized_message);
@@ -92,4 +98,26 @@ void Server::sendFrameMessage(KinectFrameMessage& kfm){
 	kfm.release_fdepth_data();
 
 	_tcp_con.sendData((void*) serialized_message.c_str(), size, "");
+}
+
+void Server::_threadHandle(){
+	char msg_nw = 0;
+	char msg = 0;
+
+	while(_running){
+		if (_tcp_con.isClosed()){
+			_running = false;
+			break;
+		}
+
+		_tcp_con.recvData((void*) &msg_nw, 1);
+		msg = ntohl(msg_nw);
+
+		LOG_DEBUG << "received trigger from server, msg = " << (int) msg << endl;
+		if (msg == 0){
+			_nc->sendTriggerMessage();
+		}
+	}
+
+	LOG_WARNING << "leave trigger thread" << endl;
 }

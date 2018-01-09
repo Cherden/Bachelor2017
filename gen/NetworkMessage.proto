@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+message NetworkMessage {
+	enum Type {
+		ELECTION = 0;
+		TRIGGER = 1;
+		SYNC = 2;
+	}
+
+	enum SyncMode {
+		SEND = 0;
+		ADJUST = 1;
+		REPLY = 2;
+	}
+
+	Type type = 1;
+
+	bool leader = 2;
+
+	//timing
+	uint64 timestamp = 3;
+	SyncMode sync_mode = 4;
+	int64 offset_usec = 5;
+}

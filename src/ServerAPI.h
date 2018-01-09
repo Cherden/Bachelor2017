@@ -13,9 +13,19 @@ public:
 
 	Client* getClient(int index);
 
-	int getClientCount() { return _clients_amount; };
+	int getVideo(int sensor_id, char** buf, int size);
+
+	int getDepth(int sensor_id, char** buf, int size);
+
+	int getCloud(int sensor_id, float** buf, int size);
+
+	uint64_t getTimestamp(int sensor_id);
 
 	bool isAbleToDeliverData();
+
+	bool allClientsConnected();
+
+	void obtainNewData();
 
 	~ServerAPI();
 

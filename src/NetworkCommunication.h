@@ -1,8 +1,9 @@
-#ifndef _SYNC_H_
-#define _SYNC_H_
+#ifndef _NETWORK_COMMUNICATION_H_
+#define _NETWORK_COMMUNICATION_H_
 
 #include <thread>
 #include <google/protobuf/message_lite.h>
+#include <map>
 
 #include "Common.h"
 
@@ -11,24 +12,30 @@
 using namespace std;
 using namespace google::protobuf;
 
-class Sync{
+class NetworkCommunication{
 public:
-	Sync();
+	NetworkCommunication();
 
 	int connect();
-	static void getTime(uint64_t* t);
 	int isActive(){ return _running; };
+	bool isTriggered();
+	void synchronize();
 
-	~Sync();
+	void sendTriggerMessage();
+
+	~NetworkCommunication();
 
 private:
 	UDPConnection _udp_con;
 
 	volatile bool _running;
-	thread _sync_thread;
+	thread _nw_thread;
 	bool _is_leader;
+	bool _trigger;
+	volatile int _sync_answer_count;
+	map<string, uint64_t> _rtt_map;
 
-	void _setTime(int64_t offset_sec, int64_t offset_nsec);
+	void _setTime(int64_t offset_nsec);
 	void _sendMessage(MessageLite& m, string ip);
 	int _recvMessage(MessageLite& m);
 	void _threadHandle();

@@ -1,7 +1,9 @@
 #include "Client.h"
 
 #include <iostream>
+#include <stdexcept>
 
+#include "Timer.h"
 #include "Logger.h"
 #include "Common.h"
 #include "../gen/ConnectionMessage.pb.h"
@@ -38,17 +40,25 @@ void Client::setInfo(struct sockaddr_in* info){
 uint64_t Client::getTimestamp(){
 	uint64_t ret = 0;
 	_data_mutex.lock();
-	ret = _sensor_data.timestamp();
+	ret = (uint64_t) (_sensor_data.timestamp() * 1000.0);
 	_data_mutex.unlock();
 
 	return ret;
 }
 
-int Client::getVideo(char** video, int size){
-	if (!_data_available){
-		return -1;
+void Client::sendTriggerMessage(){
+	if (_id != Client::leader_id){
+		return;
 	}
 
+	char msg = 42;
+	char msg_nw = htonl(msg);
+	_tcp_con.sendData((void*) &msg_nw, 1, "");
+
+	LOG_DEBUG << "sent trigger message to master node" << endl;
+}
+
+int Client::getVideo(char** video, int size){
 	_data_mutex.lock();
 
 	int size_new = _sensor_data.fvideo_data().capacity();
@@ -70,11 +80,8 @@ int Client::getVideo(char** video, int size){
 
 int Client::getDepth(char** depth, int size){
 	if (_use_point_cloud){
-		return -2;
-	}
-
-	if (!_data_available){
-		return -1;
+		cout << "error in " << _id << endl;
+		throw invalid_argument("illegal index in getVideo");
 	}
 
 	_data_mutex.lock();
@@ -189,6 +196,7 @@ void Client::_handleFrameMessage(){
 	_data_mutex.lock();
 	_sensor_data.ParseFromArray(_recv_buf, _message_size);
 
+	LOG_DEBUG << "RECV_TIMESTAMP: " << _sensor_data.timestamp() << endl;
 	/*if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
 		LOG_ERROR << "message does not contain at least one required field"
 			<< endl;
