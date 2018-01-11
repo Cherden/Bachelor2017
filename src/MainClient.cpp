@@ -86,13 +86,9 @@ int main(){
 	kinect.setLed(LED_GREEN);
 
 
-	ofstream f;
-	f.open("send_time.txt");
-
 	usleep(3000000);
 
 	if (is_leader){
-//		Timer t(&f);
 		nc.synchronize();
 	}
 
@@ -145,8 +141,6 @@ int main(){
 		double end_time = Common::getTime(NULL);
 		if (end_time - start_time >= 180000){
 			break;
-		} else {
-			//usleep(33333 - ((end_time - measure_time) * 1000));
 		}
 	}
 

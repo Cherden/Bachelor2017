@@ -144,31 +144,3 @@ int TCPConnection::recvData(void* buffer, size_t buffer_size){
 	}
 	return -1;
 }
-
-/*int TCPConnection::_recvChunks(void* buffer, int buffer_size){
-	int ret = 0;
-	int recevied_bytes = 0;
-	while(recevied_bytes != buffer_size){
-		if (_socket){
-			if ((ret = recv(_socket, (void*) &((char*)buffer)[recevied_bytes]
-					, buffer_size - recevied_bytes, 0)) < 0){
-				return ret;
-			}
-			recevied_bytes += ret;
-		} else {
-			return 0;
-		}
-	}
-	return recevied_bytes;
-}*/
-
-/*int TCPConnection::_getTimestamp(){
-	char ctrl[CMSG_SPACE(sizeof(struct timeval))];
-    struct cmsghdr *cmsg = (struct cmsghdr *) &ctrl;
-	if (cmsg->cmsg_level == SOL_SOCKET &&
-	   cmsg->cmsg_type  == SCM_TIMESTAMP &&
-	   cmsg->cmsg_len   == CMSG_LEN(sizeof(time_kernel)))
-   {
-	   memcpy(&time_kernel, CMSG_DATA(cmsg), sizeof(time_kernel));
-   }
-}*/

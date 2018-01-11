@@ -68,7 +68,6 @@ int NetworkCommunication::connect(){
 			}
 			break;
 		} else if (ret == 0) {
-			// TODO save ips in list
 			LOG_DEBUG << "Received election message from "
 				<< _udp_con.getIPFromLastSender() << ", Leader = "
 				<< sm.leader() << endl;

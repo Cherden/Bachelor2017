@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include <algorithm>    // std::min max
+#include <algorithm>
 
 #include "Timer.h"
 #include "Common.h"
@@ -49,10 +49,6 @@ int main(){
 	while(!api.allClientsConnected()){};
 	cout << "All connected!" << endl;
 
-
-	ofstream f;
-	f.open("../all.txt");
-
 	while (true){
 		api.obtainNewData();
 
@@ -60,16 +56,12 @@ int main(){
 
 		for(int i = 0; i < MAX_CLIENTS; i++){
 
-			{
-//				Timer t(&f);
+			video_size = api.getVideo(i, &video, video_size);
+			depth_size = api.getDepth(i, &depth, depth_size);
 
-				video_size = api.getVideo(i, &video, video_size);
-				depth_size = api.getDepth(i, &depth, depth_size);
+			timestamp_arr[i] = api.getTimestamp(i);
 
-				timestamp_arr[i] = api.getTimestamp(i);
-
-				//cloud_size = api.getCloud(i, &cloud, cloud_size);
-			}
+			//cloud_size = api.getCloud(i, &cloud, cloud_size);			
 
 #ifdef SHOW_IMAGE
 			Mat video_mat(Size(640, 480), CV_8UC3, video);

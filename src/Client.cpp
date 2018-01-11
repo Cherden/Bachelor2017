@@ -149,47 +149,6 @@ int Client::getCloud(float** cloud, int size){
 	return size_new;
 }
 
-/*int Client::getData(char** video, char** depth, float** cloud){
-	if (!_data_available){
-		return -1;
-	}
-
-	_data_mutex.lock();
-
-	int size = _sensor_data.fvideo_data().capacity();
-	if (*video == NULL){
-		*video = (char*) malloc(size);
-	}
-	memcpy(*video, _sensor_data.fvideo_data().c_str(), size);
-
-
-	if (!_use_point_cloud && _sensor_data.fdepth_data() != ""){
-		size = _sensor_data.fdepth_data().capacity();
-		if (*depth == NULL){
-			*depth = (char*) malloc(size);
-		}
-		memcpy(*depth, _sensor_data.fdepth_data().c_str(), size);
-	} else if (_use_point_cloud){
-		if (*cloud == NULL){
-			cout << "DEBUG malloc pointer with cloud size = " << _sensor_data.cloud_size() << endl;
-			*cloud = (float*) malloc(_sensor_data.cloud_size() * sizeof(float));
-		}
-		cout << "DEBUG enter data with cloud size = " << _sensor_data.cloud_size() << endl;
-		for (int i = 0; i < _sensor_data.cloud_size(); i++){
-			(*cloud)[i] = _sensor_data.cloud(i);
-		}
-	} else {
-		_data_mutex.unlock();
-		return -1;
-	}
-
-	_data_available = 0;
-
-	_data_mutex.unlock();
-
-	return 0;
-}*/
-
 void Client::_handleFrameMessage(){
 	_tcp_con.recvData((void *) _recv_buf, _message_size);
 
@@ -197,12 +156,8 @@ void Client::_handleFrameMessage(){
 	_sensor_data.ParseFromArray(_recv_buf, _message_size);
 
 	LOG_DEBUG << "RECV_TIMESTAMP: " << _sensor_data.timestamp() << endl;
-	/*if (_sensor_data.fvideo_data() == "" || _sensor_data.timestamp() == 0){
-		LOG_ERROR << "message does not contain at least one required field"
-			<< endl;
-	} else {*/
-		_data_available = 1;
-	//}
+	
+	_data_available = 1;
 
 	_data_mutex.unlock();
 }
